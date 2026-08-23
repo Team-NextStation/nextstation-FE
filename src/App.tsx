@@ -11,6 +11,7 @@ import { AuthProvider } from "@/contexts/auth";
 import { LogDraftProvider } from "@/pages/course/contexts/LogDraftContext";
 import "react-toastify/dist/ReactToastify.css";
 import Toast from "@/pages/course/components/Toast";
+import GoogleAnalyticsTracker from "@/components/GoogleAnalyticsTracker";
 
 const SplashPage = lazy(() => import("@/pages/SplashPage"));
 const MainPage = lazy(() => import("@/pages/MainPage"));
@@ -232,6 +233,7 @@ function App() {
     <LogDraftProvider>
       <AuthProvider>
         <BrowserRouter>
+          <GoogleAnalyticsTracker />
           <AppRoutes />
           <Toast />
         </BrowserRouter>
