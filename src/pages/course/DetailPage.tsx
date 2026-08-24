@@ -479,7 +479,7 @@ export default function DetailPage() {
             <button
               type="button"
               onClick={handleToggleSave}
-              aria-label={saved ? "저장 취소" : "저장"}
+              aria-label={saved ? "좋아요 취소" : "좋아요"}
               aria-pressed={saved}
               disabled={isSaving}
               className="grid size-6 place-items-center disabled:opacity-50"
@@ -565,7 +565,7 @@ export default function DetailPage() {
                   조회수 {course.viewCount}
                 </span>
                 <span className="text-body-02 leading-[1.4] tracking-[-0.3px] text-gray-80">
-                  저장 {course.saveCount}
+                  좋아요 {course.saveCount}
                 </span>
               </div>
               <button
