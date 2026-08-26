@@ -240,7 +240,7 @@ export default function MyPage() {
 
       {/* 프로필 */}
       <section className="flex justify-center">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 items-center">
           {myProfile.profileImageUrl ? (
             <img
               src={myProfile.profileImageUrl}
