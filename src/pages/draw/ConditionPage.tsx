@@ -113,9 +113,15 @@ function ConditionPage() {
             
             {/* 출발역 */}
             <div className="flex flex-col w-full gap-4 items-start">
-              <p className="text-subtitle text-gray-100 leading-[1.4] tracking-[-0.025em]">
-                출발역은 어디인가요?
-              </p>
+              <div className="flex flex-col gap-1 items-start">
+                <p className="text-subtitle text-gray-100 leading-[1.4] tracking-[-0.025em]">
+                  출발역은 어디인가요?
+                </p>
+                <p className="text-caption text-gray-70 leading-[1.4] tracking-[-0.025em]">
+                  현재 버전에서는 서울 안에서의 역만 출발역으로 설정 가능해요
+                </p>
+              </div>
+              
               <div className="flex flex-col w-full gap-2">
                 <SearchBar
                   query={query}
