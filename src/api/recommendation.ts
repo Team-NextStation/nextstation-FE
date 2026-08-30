@@ -32,6 +32,7 @@ export const TRAVEL_STYLE_LABELS: Record<RecommendationTravelStyle, string> = {
 };
 
 export interface CustomRecommendationRequest {
+  recommendationSessionId: string;
   departureStationId: number;
   travelTime: RecommendationTravelTime;
   travelStyles: RecommendationTravelStyle[];
