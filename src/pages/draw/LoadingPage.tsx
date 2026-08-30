@@ -30,12 +30,20 @@ type DrawResult =
 type LoadingPageState = {
   source?: "random" | "recommend";
   recommendationRequest?: CustomRecommendationRequest;
+  recommendationSessionId?: string;
 };
 
 function LoadingPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const loadingState = location.state as LoadingPageState | null;
+  const source = loadingState?.source ?? "random";
+  const recommendationRequest = loadingState?.recommendationRequest;
+  const [fallbackRecommendationSessionId] = useState(() => crypto.randomUUID());
+  const recommendationSessionId =
+    loadingState?.recommendationSessionId ??
+    recommendationRequest?.recommendationSessionId ??
+    fallbackRecommendationSessionId;
   const retryTimeoutRef = useRef<number | null>(null);
   const phaseTimeoutRef = useRef<number | null>(null);
   const searchLottieRef = useRef<LottieRefCurrentProps | null>(null);
@@ -52,8 +60,6 @@ function LoadingPage() {
     Boolean(getCachedMyProfile()?.nickname),
   );
   const isLoggedIn = Boolean(getAccessToken());
-  const source = loadingState?.source ?? "random";
-  const recommendationRequest = loadingState?.recommendationRequest;
 
   useEffect(() => {
     let isMounted = true;
@@ -119,7 +125,7 @@ function LoadingPage() {
         const result =
           source === "recommend" && recommendationRequest
             ? await getCustomRecommendation(recommendationRequest)
-            : await drawRandomStation();
+            : await drawRandomStation(recommendationSessionId);
         if (!isMounted) return;
 
         pendingResultRef.current = result;
@@ -153,7 +159,13 @@ function LoadingPage() {
         window.clearTimeout(phaseTimeoutRef.current);
       }
     };
-  }, [isLoggedIn, navigate, recommendationRequest, source]);
+  }, [
+    isLoggedIn,
+    navigate,
+    recommendationRequest,
+    recommendationSessionId,
+    source,
+  ]);
 
   const handleCompleteAnimationEnd = () => {
     const result = pendingResultRef.current;
@@ -163,6 +175,7 @@ function LoadingPage() {
       state: {
         ...result,
         recommendationRequest,
+        recommendationSessionId,
         source,
       },
       replace: true,

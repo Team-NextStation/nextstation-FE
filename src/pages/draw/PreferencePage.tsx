@@ -147,6 +147,7 @@ function PreferencePage() {
             disabled={!isFormValid}
             onClick={() => {
               const recommendationRequest = {
+                recommendationSessionId: crypto.randomUUID(),
                 departureStationId: condition.departureStationId,
                 travelTime: condition.travelTime,
                 travelStyles: mappedTravelStyles,
