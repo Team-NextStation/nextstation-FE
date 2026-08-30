@@ -49,9 +49,15 @@ export class RandomDrawNotFoundError extends Error {
   }
 }
 
-export async function drawRandomStation(): Promise<RandomDrawResponseData> {
+export async function drawRandomStation(
+  recommendationSessionId: string,
+): Promise<RandomDrawResponseData> {
   const response = await fetchWithOptionalAuth(`${API_BASE_URL}/api/v1/random`, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ recommendationSessionId }),
   });
 
   if (response.status === 404) {

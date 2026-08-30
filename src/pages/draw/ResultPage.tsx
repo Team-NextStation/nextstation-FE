@@ -12,6 +12,7 @@ import SubwayLineChip from '@/components/SubwayLineChip';
 type ResultPageState = (RandomDrawResponseData | CustomRecommendationResponseData) & {
   source?: "random" | "recommend";
   recommendationRequest?: CustomRecommendationRequest;
+  recommendationSessionId?: string;
 };
 
 function ResultPage() {
@@ -24,7 +25,12 @@ function ResultPage() {
     return null;
   }
 
-  const { station, source = "random", recommendationRequest } = result;
+  const {
+    station,
+    source = "random",
+    recommendationRequest,
+    recommendationSessionId,
+  } = result;
   const primaryLine = station.lines[0];
   const formattedDescription = station.description.replace(/,\s*/g, ",\n");
   const isRecommendResult = source === "recommend";
@@ -83,6 +89,7 @@ function ResultPage() {
               state: {
                 source,
                 recommendationRequest,
+                recommendationSessionId,
               },
             })
           }

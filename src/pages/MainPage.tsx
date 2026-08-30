@@ -43,7 +43,11 @@ function MainPage() {
           <DoorLeft className="h-full w-full" />
           <Button
             direction="left"
-            onClick={() => navigate('/draw/loading')}
+            onClick={() =>
+              navigate('/draw/loading', {
+                state: { recommendationSessionId: crypto.randomUUID() },
+              })
+            }
             className="absolute left-5 top-[56%] z-10"
           >
             랜덤뽑기
