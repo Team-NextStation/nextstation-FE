@@ -1,4 +1,4 @@
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 
 const AGREED_TERMS_STORAGE_KEY = "auth.agreedTermsIds";
 const REQUIRED_TERMS_AGREED_STORAGE_KEY = "auth.requiredTermsAgreed";

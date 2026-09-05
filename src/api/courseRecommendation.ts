@@ -49,7 +49,7 @@ export interface StationCourseRecommendation {
   categories: StationCategory[];
 }
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 
 export function buildStationCourseRecommendationUrl(
   baseUrl: string,

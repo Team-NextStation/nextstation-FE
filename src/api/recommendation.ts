@@ -1,7 +1,7 @@
 import { fetchWithOptionalAuth } from "@/api/auth";
 import type { SubwayLine } from "@/types/subway";
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 
 export type RecommendationTravelTime =
   | "THIRTY_MINUTES"

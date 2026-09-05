@@ -59,7 +59,7 @@ export interface CopyPreviewCourse {
 import { fetchWithRequiredAuth, getAccessToken } from "@/api/auth";
 import type { SubwayLine } from "@/types/subway";
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 
 export interface CourseDetailImage {
   id: number;
