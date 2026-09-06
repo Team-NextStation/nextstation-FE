@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:ios": "tsc -b && vite build --mode capacitor",
+    "build:app": "tsc -b && vite build --mode capacitor && cap sync",
     "lint": "eslint .",
     "preview": "vite preview"
   },
