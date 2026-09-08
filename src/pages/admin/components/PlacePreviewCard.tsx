@@ -21,7 +21,7 @@ export default function PlacePreviewCard({
   line,
   imageUrl,
   category,
-  tags,
+  tags = [],
   description,
   status,
 }: PlacePreviewCardProps) {

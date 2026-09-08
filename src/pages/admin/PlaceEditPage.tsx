@@ -41,7 +41,7 @@ export default function PlaceEditPage() {
   const { placeId } = useParams();
   const place = mockPlaces.find((place) => place.id === placeId);
 
-  const [isDirty, setIsDirty] = useState(true); // TODO : isDrity 수정
+  const isDirty = true; // TODO : 추후 setIsDirty 추가
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   const [selectedHastagOption1, setSelectedHastagOption1] =

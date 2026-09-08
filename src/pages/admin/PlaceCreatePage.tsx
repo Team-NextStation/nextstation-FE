@@ -90,7 +90,7 @@ export default function PlaceCreatePage() {
 
       ps.keywordSearch(
         keyword,
-        (data, status) => {
+        (data: unknown, status: string) => {
           if (isCancelled) return;
           if (status === window.kakao.maps.services.Status.OK) {
             setResults(data as unknown as KakaoPlaceResult[]);
