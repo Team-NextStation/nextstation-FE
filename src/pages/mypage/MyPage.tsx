@@ -22,6 +22,7 @@ import MyPageModal from "./components/MyPageModal";
 import BottomNav from "@/components/BottomNav";
 import { clearAccessToken, logout } from "@/api/auth";
 import { showToast } from "@/pages/course/components/ShowToast";
+import { useAuth } from "@/contexts/useAuth";
 
 export default function MyPage() {
   const navigate = useNavigate();
@@ -44,6 +45,8 @@ export default function MyPage() {
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
   const [isCreateJournalModalOpen, setIsCreateJournalModalOpen] =
     useState(false);
+
+  const { isAdmin } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -90,6 +93,9 @@ export default function MyPage() {
           label: "회원 탈퇴",
           onClick: () => setIsWithdrawalModalOpen(true),
         },
+        ...(isAdmin
+          ? [{ label: "관리자페이지", onClick: () => navigate("/admin") }]
+          : []),
       ],
     },
     {
@@ -108,9 +114,14 @@ export default function MyPage() {
           label: "마케팅 정보 수신 동의",
           onClick: () => navigate("/auth/terms/MARKETING"),
         },
-         {
+        {
           label: "문의/건의하기",
-          onClick: () => window.open("https://docs.google.com/forms/d/e/1FAIpQLSdzKvZM3iOm8RFci4vdA0vjJAfciwrfB5RfWDNJhRR79FUm2g/viewform?usp=sharing&ouid=107704491380281978729", "_blank", "noopener,noreferrer"),
+          onClick: () =>
+            window.open(
+              "https://docs.google.com/forms/d/e/1FAIpQLSdzKvZM3iOm8RFci4vdA0vjJAfciwrfB5RfWDNJhRR79FUm2g/viewform?usp=sharing&ouid=107704491380281978729",
+              "_blank",
+              "noopener,noreferrer",
+            ),
         },
       ],
     },
