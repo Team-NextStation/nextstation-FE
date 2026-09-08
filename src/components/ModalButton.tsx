@@ -5,6 +5,7 @@ type ModalButtonVariant = "primary" | "secondary";
 interface ModalButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variant?: ModalButtonVariant;
+  width?: number;
 }
 
 const variantStyles: Record<ModalButtonVariant, string> = {
@@ -19,16 +20,19 @@ export default function ModalButton({
   children,
   variant = "primary",
   className = "",
+  width = 150,
   ...props
 }: ModalButtonProps) {
   return (
     <button
       type="button"
       className={`
-        flex h-[50px] w-[150px] items-center justify-center rounded-lg py-3
+        flex h-[50px] items-center justify-center rounded-lg py-3
         ${variantStyles[variant]}
         ${className}
+        
       `}
+      style={{ width }}
       {...props}
     >
       <span className="whitespace-nowrap text-title-02 font-semibold leading-[1.4] tracking-[-0.45px]">
