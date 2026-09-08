@@ -6,6 +6,7 @@ import {
 } from "react";
 import {
   getAccessToken,
+  getRole,
   restoreAccessToken,
   subscribeToAccessTokenChange,
 } from "@/api/auth";
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       isLoggedIn: status === "authenticated",
       isChecking: status === "checking",
+      isAdmin: status === "authenticated" && getRole() === "ADMIN",
     }),
     [status],
   );
