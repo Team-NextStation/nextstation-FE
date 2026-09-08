@@ -8,6 +8,7 @@ const KAKAO_SIGNUP_TOKEN_STORAGE_KEY = "auth.kakaoSignupToken";
 const KAKAO_PROFILE_STORAGE_KEY = "auth.kakaoProfile";
 const KAKAO_OAUTH_STATE_STORAGE_KEY = "auth.kakaoOAuthState";
 const ACCESS_TOKEN_CHANGED_EVENT = "auth:access-token-changed";
+const ROLE_STORAGE_KEY = "auth.role";
 
 export type AuthTermType = "SERVICE" | "PRIVACY" | "MARKETING";
 
@@ -80,7 +81,10 @@ async function authRequest<T>(
 
 export function saveAgreedTermsIds(ids: number[], requiredTermsAgreed = false) {
   sessionStorage.setItem(AGREED_TERMS_STORAGE_KEY, JSON.stringify(ids));
-  sessionStorage.setItem(REQUIRED_TERMS_AGREED_STORAGE_KEY, String(requiredTermsAgreed));
+  sessionStorage.setItem(
+    REQUIRED_TERMS_AGREED_STORAGE_KEY,
+    String(requiredTermsAgreed),
+  );
 }
 
 export function getAgreedTermsIds(): number[] {
@@ -132,6 +136,7 @@ export function getAccessToken() {
 export function clearAccessToken() {
   sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
   notifyAccessTokenChanged(null);
+  clearRole();
 }
 
 let reissueAccessTokenPromise: Promise<string> | null = null;
@@ -160,8 +165,9 @@ function createAuthHeaders(
 async function requestAccessTokenReissue() {
   if (!reissueAccessTokenPromise) {
     reissueAccessTokenPromise = reissueAccessToken()
-      .then(({ accessToken }) => {
+      .then(({ accessToken, role }) => {
         saveAccessToken(accessToken);
+        saveRole(role);
         return accessToken;
       })
       .finally(() => {
@@ -198,10 +204,7 @@ export function subscribeToAccessTokenChange(
     listener((event as CustomEvent<string | null>).detail);
   };
 
-  window.addEventListener(
-    ACCESS_TOKEN_CHANGED_EVENT,
-    handleAccessTokenChanged,
-  );
+  window.addEventListener(ACCESS_TOKEN_CHANGED_EVENT, handleAccessTokenChanged);
 
   return () => {
     window.removeEventListener(
@@ -209,6 +212,19 @@ export function subscribeToAccessTokenChange(
       handleAccessTokenChanged,
     );
   };
+}
+
+// USER | ADMIN
+export function saveRole(role: string) {
+  sessionStorage.setItem(ROLE_STORAGE_KEY, role);
+}
+
+export function getRole() {
+  return sessionStorage.getItem(ROLE_STORAGE_KEY);
+}
+
+export function clearRole() {
+  sessionStorage.removeItem(ROLE_STORAGE_KEY);
 }
 
 export async function fetchWithRequiredAuth(
@@ -426,6 +442,7 @@ export function setupProfile(
 interface LoginResponse {
   memberId: number;
   accessToken: string;
+  role: "USER" | "ADMIN";
 }
 
 export function login(email: string, password: string) {
@@ -436,9 +453,12 @@ export function login(email: string, password: string) {
 }
 
 export function reissueAccessToken() {
-  return authRequest<{ accessToken: string }>("/api/v1/auth/reissue", {
-    method: "POST",
-  });
+  return authRequest<{ accessToken: string; role: "USER" | "ADMIN" }>(
+    "/api/v1/auth/reissue",
+    {
+      method: "POST",
+    },
+  );
 }
 
 export interface KakaoProfileDraft {
@@ -480,6 +500,7 @@ interface KakaoLoginResponse {
   kakaoSignupToken?: string;
   kakaoNickname?: string;
   kakaoProfileImageUrl?: string;
+  role?: "USER" | "ADMIN";
 }
 
 export function kakaoLogin(
