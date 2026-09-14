@@ -72,7 +72,7 @@ export interface Course {
   imageUrl: string | null;
 }
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 
 // 장소 상세 조회
 export async function getPlaceDetail(placeId: number): Promise<Place> {

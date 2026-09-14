@@ -40,7 +40,7 @@ export interface RandomCourseRerollResponseData {
   places: RandomCoursePlaceResponse[];
 }
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 
 export class RandomDrawNotFoundError extends Error {
   constructor(message = "뽑기 대상 역이 없음") {

@@ -4,7 +4,7 @@ import {
   getAccessToken,
 } from "./auth";
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 
 export interface ExploreCourseLine {
   id: number;

@@ -10,7 +10,7 @@ export interface Station {
   lines: StationLine[];
 }
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 
 // 출발역 검색
 export async function searchStations(

@@ -54,7 +54,7 @@ export interface PublicMemberCourses {
   hasNext: boolean;
 }
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 const MEMBER_PROFILE_STORAGE_KEY = "member.profile";
 
 async function getPublicMemberData<T>(path: string): Promise<T> {
