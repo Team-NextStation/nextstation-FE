@@ -1,21 +1,17 @@
-﻿import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import CTAButton from '@/components/CTAButton';
-import Header from '@/components/Header';
-import {
-  AuthApiError,
-  login,
-  saveAccessToken,
-} from '@/api/auth';
-import { getMyProfile } from '@/api/member';
-import AuthInput from './components/AuthInput';
+﻿import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CTAButton from "@/components/CTAButton";
+import Header from "@/components/Header";
+import { AuthApiError, login, saveAccessToken, saveRole } from "@/api/auth";
+import { getMyProfile } from "@/api/member";
+import AuthInput from "./components/AuthInput";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEmailFormatValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordFormatValid = password.length >= 8;
@@ -24,16 +20,17 @@ export default function LoginPage() {
 
   const validateEmail = () => {
     const nextError = isEmailFormatValid
-      ? ''
-      : '이메일 형식이 올바르지 않습니다.';
+      ? ""
+      : "이메일 형식이 올바르지 않습니다.";
 
     setEmailError(nextError);
     return !nextError;
   };
 
   const validatePassword = () => {
-    const nextError =
-      isPasswordFormatValid ? '' : '비밀번호는 8자 이상 입력해주세요.';
+    const nextError = isPasswordFormatValid
+      ? ""
+      : "비밀번호는 8자 이상 입력해주세요.";
 
     setPasswordError(nextError);
     return !nextError;
@@ -49,15 +46,16 @@ export default function LoginPage() {
 
     try {
       setIsSubmitting(true);
-      const { accessToken } = await login(email, password);
+      const { accessToken, role } = await login(email, password);
       saveAccessToken(accessToken);
+      saveRole(role);
       await getMyProfile();
-      navigate('/');
+      navigate("/");
     } catch (error) {
       const message =
         error instanceof AuthApiError
           ? error.message
-          : '로그인 요청에 실패했습니다.';
+          : "로그인 요청에 실패했습니다.";
       setPasswordError(message);
     } finally {
       setIsSubmitting(false);
@@ -76,7 +74,7 @@ export default function LoginPage() {
             value={email}
             onChange={(event) => {
               setEmail(event.target.value);
-              setEmailError('');
+              setEmailError("");
             }}
             onBlur={validateEmail}
             autoComplete="email"
@@ -90,7 +88,7 @@ export default function LoginPage() {
               value={password}
               onChange={(event) => {
                 setPassword(event.target.value);
-                setPasswordError('');
+                setPasswordError("");
               }}
               onBlur={validatePassword}
               autoComplete="current-password"
@@ -98,7 +96,7 @@ export default function LoginPage() {
             />
             <button
               type="button"
-              onClick={() => navigate('/auth/reset-password')}
+              onClick={() => navigate("/auth/reset-password")}
               className="self-end text-body-02 font-regular leading-[1.4] tracking-[-0.025em] text-gray-80 underline underline-offset-2"
             >
               비밀번호 찾기
@@ -112,7 +110,7 @@ export default function LoginPage() {
           </p>
           <button
             type="button"
-            onClick={() => navigate('/auth/terms')}
+            onClick={() => navigate("/auth/terms")}
             className="text-title-02 font-semibold leading-[1.4] tracking-[-0.025em] text-primary-60 underline underline-offset-4"
           >
             이메일로 회원가입
@@ -126,7 +124,7 @@ export default function LoginPage() {
           disabled={isLoginDisabled}
           onClick={handleLogin}
         >
-          {isSubmitting ? '로그인 중' : '로그인하기'}
+          {isSubmitting ? "로그인 중" : "로그인하기"}
         </CTAButton>
       </div>
     </main>
