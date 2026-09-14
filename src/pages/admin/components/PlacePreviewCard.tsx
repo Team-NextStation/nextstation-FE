@@ -54,7 +54,7 @@ export default function PlacePreviewCard({
           <span className="text-gray-100 text-body-01 font-semibold leading-[1.4] tracking-[-0.35px]">
             {name}
           </span>
-          <p className="text-gray-100 text-body-02 leading-[1.4] tracking-[-0.3px]">
+          <p className="text-gray-100 text-body-02 leading-[1.4] tracking-[-0.3px] break-keep">
             {description}
           </p>
         </div>

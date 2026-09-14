@@ -10,9 +10,15 @@ type DropdownProps = {
   options: Option[];
   value: string;
   onSelect?: (value: string) => void;
+  placeholder?: string;
 };
 
-export default function Dropdown({ options, value, onSelect }: DropdownProps) {
+export default function Dropdown({
+  options,
+  value,
+  onSelect,
+  placeholder,
+}: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const selectedOption =
     options.find((option) => option.value === value) ?? null;
@@ -32,7 +38,7 @@ export default function Dropdown({ options, value, onSelect }: DropdownProps) {
         onClick={toggleDropdown}
       >
         <span className="text-gray-70 text-body-01 font-semibold leading-[1.4] tracking-[-0.35px]">
-          {selectedOption?.label}
+          {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ArrowDown
           className={`flex w-5 h-5 items-center justify-center ${isOpen ? "rotate-180" : ""}`}

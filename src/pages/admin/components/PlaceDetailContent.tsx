@@ -1,22 +1,27 @@
 import LineBadge from "@/components/LineBadge";
 import type { SubwayLine } from "@/types/subway";
 import DetailTagChip from "./DetailTagChip";
-import { CATEGORY_LABELS, type MockPlace } from "../data/mockPlaces";
+import { CATEGORY_LABELS } from "../data/mockPlaces";
+import type { placeDetail } from "@/api/admin";
+import {
+  TRAVEL_STYLE_LABELS,
+  type RecommendationTravelStyle,
+} from "@/api/recommendation";
 
-export default function PlaceDetailContent({ place }: { place: MockPlace }) {
+export default function PlaceDetailContent({ place }: { place: placeDetail }) {
   return (
     <div className="flex flex-col w-[360px] gap-6">
       {/* text-info */}
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center gap-1">
-          <LineBadge line={place.line.id as SubwayLine} />
+          <LineBadge line={place.representativeLine.id as SubwayLine} />
           <span className="text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-100">
-            {place.station}
+            {place.stationName}
           </span>
         </div>
 
         <span className="text-headline font-semibold leading-[1.4] tracking-[-0.6px] text-gray-100">
-          {place.name}
+          {place.placeName}
         </span>
 
         <div className="flex flex-col">
@@ -24,15 +29,15 @@ export default function PlaceDetailContent({ place }: { place: MockPlace }) {
             {place.address}
           </span>
           <span className="text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-80">
-            X {place.coordinate.x} ∙ Y {place.coordinate.y}
+            X {place.xCoordinate} ∙ Y {place.yCoordinate}
           </span>
           <a
-            href={place.link}
+            href={place.kakaoPlaceUrl}
             target="_blank"
             rel="noreferrer"
             className="text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-80 underline"
           >
-            {place.link}
+            {place.kakaoPlaceUrl}
           </a>
         </div>
 
@@ -40,13 +45,13 @@ export default function PlaceDetailContent({ place }: { place: MockPlace }) {
         <div className="flex flex-col gap-4">
           <div className="flex gap-2">
             <DetailTagChip
-              content={CATEGORY_LABELS[place.category]}
+              content={CATEGORY_LABELS[place.categoryCode]}
               variant="secondary"
             />
             {place.tags.map((tag) => (
               <DetailTagChip
                 key={tag}
-                content={`#${tag}`}
+                content={`#${TRAVEL_STYLE_LABELS[tag as RecommendationTravelStyle]}`}
                 variant="secondary"
               />
             ))}
@@ -65,7 +70,11 @@ export default function PlaceDetailContent({ place }: { place: MockPlace }) {
               key={index}
               className="aspect-square overflow-hidden rounded-lg"
             >
-              <img src={image} className="h-full w-full object-cover" alt="" />
+              <img
+                src={image.imageUrl}
+                className="h-full w-full object-cover"
+                alt=""
+              />
             </div>
           ))}
         </div>

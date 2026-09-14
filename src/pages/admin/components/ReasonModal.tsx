@@ -6,12 +6,16 @@ type modeType = "rejected" | "deleted";
 
 interface ReasonModalProps extends ComponentPropsWithoutRef<"div"> {
   mode: modeType;
+  reason: string;
+  setReason: (value: string) => void;
   onClose: () => void;
   onConfirm: () => void;
 }
 
 export default function ReasonModal({
   mode = "rejected",
+  reason,
+  setReason,
   onClose,
   onConfirm,
 }: ReasonModalProps) {
@@ -36,7 +40,9 @@ export default function ReasonModal({
         </p>
         <textarea
           placeholder={isRejected ? "반려 이유 작성하기" : "삭제 이유 작성하기"}
+          value={reason}
           className="flex p-4 rounded-lg min-h-[100px] min-w-[302px] resize-none bg-gray-10 text-gray-90 text-body-02 leading-[1.4] tracking-[-0.3px] placeholder:text-gray-60 outline-none"
+          onChange={(e) => setReason(e.target.value)}
         />
         <div className="flex gap-2">
           <ModalButton variant="secondary" onClick={onClose}>

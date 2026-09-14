@@ -1,4 +1,4 @@
-export type StatusChipVariant = "approved" | "pending" | "rejected" | "deleted";
+export type StatusChipVariant = "APPROVED" | "PENDING" | "REJECTED" | "DELETED";
 export type StatusChipMode = "card" | "page";
 
 interface StatusChipProps {
@@ -7,17 +7,17 @@ interface StatusChipProps {
 }
 
 const contentMapping: Record<StatusChipVariant, string> = {
-  approved: "등록",
-  pending: "대기",
-  rejected: "반려",
-  deleted: "삭제",
+  APPROVED: "등록",
+  PENDING: "대기",
+  REJECTED: "반려",
+  DELETED: "삭제",
 };
 
 const variantStyles: Record<StatusChipVariant, string> = {
-  approved: `bg-subway-2-dark text-white`,
-  pending: `bg-gray-30 text-gray-90`,
-  rejected: `bg-[#FF9135] text-white`,
-  deleted: `bg-[#F54900] text-white`,
+  APPROVED: `bg-subway-2-dark text-white`,
+  PENDING: `bg-gray-30 text-gray-90`,
+  REJECTED: `bg-[#FF9135] text-white`,
+  DELETED: `bg-[#F54900] text-white`,
 };
 
 const modeStyles: Record<StatusChipMode, string> = {
@@ -26,7 +26,7 @@ const modeStyles: Record<StatusChipMode, string> = {
 };
 
 export default function StatusChip({
-  variant = "approved",
+  variant = "APPROVED",
   mode = "card",
 }: StatusChipProps) {
   return (

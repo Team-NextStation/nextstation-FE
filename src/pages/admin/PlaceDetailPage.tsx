@@ -1,24 +1,41 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BackIcon from "@/assets/back.svg?react";
 import More from "@/assets/like/more.svg?react";
 
-import { mockPlaces } from "./data/mockPlaces";
 import PlaceDetailContent from "./components/PlaceDetailContent";
 import StatusChip from "./components/StatusChip";
 import ModalButton from "@/components/ModalButton";
 import ReasonModal from "./components/ReasonModal";
+import {
+  getPlaceDetail,
+  patchPlaceStatus,
+  type placeDetail,
+} from "@/api/admin";
 
 // 장소로부터 진입
 
 export default function PlaceDetailPage() {
   const navigate = useNavigate();
   const { placeId } = useParams();
-  const place = mockPlaces.find((p) => p.id === placeId);
+  const [place, setPlace] = useState<placeDetail>();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isPending = place?.status === "pending";
+  const isPending = place?.status === "PENDING";
   const [isRejectedModalOpen, setIsRejectedModalOpen] = useState(false);
   const [isDeletedModalOpen, setIsDeletedModalOpen] = useState(false);
+  const [reason, setReason] = useState("");
+
+  useEffect(() => {
+    const fetchPlaceDetail = async () => {
+      try {
+        const data = await getPlaceDetail(Number(placeId));
+        setPlace(data);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchPlaceDetail();
+  }, [placeId]);
 
   if (!place) {
     return (
@@ -28,21 +45,55 @@ export default function PlaceDetailPage() {
     );
   }
 
+  const refreshPlace = async () => {
+    const data = await getPlaceDetail(Number(placeId));
+    setPlace(data);
+  };
+
+  // 승인
+  const handleApproved = async () => {
+    await patchPlaceStatus(Number(placeId), "APPROVED");
+    await refreshPlace();
+  };
+
+  // 반려
+  const handleRejected = async () => {
+    await patchPlaceStatus(Number(placeId), "REJECTED", reason);
+    setIsRejectedModalOpen(false);
+    navigate("/admin/place");
+  };
+
+  // 삭제
+  const handleDeleted = async () => {
+    await patchPlaceStatus(Number(placeId), "DELETED", reason);
+    setIsDeletedModalOpen(false);
+    navigate("/admin/place");
+  };
+
   return (
     <main className="flex flex-col h-dvh  bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-      {/* TODO : onConfirm 추후 수정 */}
       {isRejectedModalOpen && (
         <ReasonModal
           mode="rejected"
-          onClose={() => setIsRejectedModalOpen(false)}
-          onConfirm={() => setIsRejectedModalOpen(false)}
+          reason={reason}
+          setReason={setReason}
+          onClose={() => {
+            setIsRejectedModalOpen(false);
+            setReason("");
+          }}
+          onConfirm={handleRejected}
         />
       )}
       {isDeletedModalOpen && (
         <ReasonModal
           mode="deleted"
-          onClose={() => setIsDeletedModalOpen(false)}
-          onConfirm={() => setIsDeletedModalOpen(false)}
+          reason={reason}
+          setReason={setReason}
+          onClose={() => {
+            setIsDeletedModalOpen(false);
+            setReason("");
+          }}
+          onConfirm={handleDeleted}
         />
       )}
 
@@ -117,7 +168,9 @@ export default function PlaceDetailPage() {
             >
               반려
             </ModalButton>
-            <ModalButton width={175}>승인</ModalButton>
+            <ModalButton width={175} onClick={handleApproved}>
+              승인
+            </ModalButton>
           </div>
         </div>
       ) : (

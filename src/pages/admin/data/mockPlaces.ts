@@ -78,7 +78,7 @@ export const mockPlaces: MockPlace[] = [
     category: "CAFE",
     tags: ["사진찍기좋은", "실내위주"],
     description: "버섯 인형이 반겨주는 아기자기한 감성 카페",
-    status: "approved",
+    status: "APPROVED",
   },
   {
     id: "2",
@@ -93,7 +93,7 @@ export const mockPlaces: MockPlace[] = [
     category: "CULTURE",
     tags: ["골목여행", "사진찍기좋은"],
     description: "골목 곳곳에 그려진 벽화를 구경하며 걸을 수 있는 곳",
-    status: "pending",
+    status: "PENDING",
   },
   {
     id: "3",
@@ -108,7 +108,7 @@ export const mockPlaces: MockPlace[] = [
     category: "FOOD",
     tags: ["가성비", "핫플레이스"],
     description: "철공소 골목 안에 숨어 있는 노포 감성 맛집",
-    status: "approved",
+    status: "APPROVED",
   },
   {
     id: "4",
@@ -123,7 +123,7 @@ export const mockPlaces: MockPlace[] = [
     category: "WALK",
     tags: ["자연과함께", "핫플레이스"],
     description: "학교 담벼락을 따라 걷기 좋은 조용한 산책로",
-    status: "pending",
+    status: "PENDING",
   },
   {
     id: "5",
@@ -138,7 +138,7 @@ export const mockPlaces: MockPlace[] = [
     category: "CAFE",
     tags: ["핫플레이스", "사진찍기좋은"],
     description: "정보 확인이 필요해 반려된 옥상 뷰 카페",
-    status: "rejected",
+    status: "REJECTED",
     reason: "영업시간 정보가 실제와 달라 확인 후 다시 등록해주세요.",
   },
   {
@@ -154,7 +154,7 @@ export const mockPlaces: MockPlace[] = [
     category: "FOOD",
     tags: ["시장구경", "가성비"],
     description: "주소 확인이 안 돼 반려된 곱창 맛집",
-    status: "rejected",
+    status: "REJECTED",
     reason:
       "입력하신 주소로 위치를 찾을 수 없어요. 정확한 주소로 다시 등록해주세요.",
   },
@@ -171,7 +171,7 @@ export const mockPlaces: MockPlace[] = [
     category: "CULTURE",
     tags: ["체험", "실내위주"],
     description: "폐업으로 삭제된 공방 체험 공간",
-    status: "deleted",
+    status: "DELETED",
     reason: "업체 폐업이 확인되어 목록에서 삭제되었습니다.",
   },
   {
@@ -187,7 +187,7 @@ export const mockPlaces: MockPlace[] = [
     category: "CULTURE",
     tags: ["쇼핑", "가성비"],
     description: "폐업으로 삭제된 오래된 헌책방",
-    status: "deleted",
+    status: "DELETED",
     reason: "중복 등록된 장소로 확인되어 삭제되었습니다.",
   },
 ];

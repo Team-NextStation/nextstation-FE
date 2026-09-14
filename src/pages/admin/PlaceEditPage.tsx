@@ -2,13 +2,15 @@ import Header from "@/components/Header";
 import DetailTagChip from "./components/DetailTagChip";
 import LineBadge from "@/components/LineBadge";
 import EditDropdown from "./components/EditDropdown";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CTAButton from "@/components/CTAButton";
 import { useNavigate, useParams } from "react-router-dom";
 import PlacePhotoUploader from "./components/PlacePhotoUploader";
 import ConfirmModal from "@/components/ConfirmModal";
-import { CATEGORY_LABELS, mockPlaces } from "./data/mockPlaces";
+import { CATEGORY_LABELS } from "./data/mockPlaces";
 import type { SubwayLine } from "@/types/subway";
+import type { placeDetail } from "@/api/admin";
+import { getPlaceDetail, patchPlaceInfo } from "@/api/admin";
 
 type HastagOption = {
   label: string;
@@ -39,30 +41,65 @@ const hashtagSortOptions: HastagOption[] = [
 export default function PlaceEditPage() {
   const navigate = useNavigate();
   const { placeId } = useParams();
-  const place = mockPlaces.find((place) => place.id === placeId);
+  const [place, setPlace] = useState<placeDetail>();
 
   const isDirty = true; // TODO : 추후 setIsDirty 추가
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   const [selectedHastagOption1, setSelectedHastagOption1] =
-    useState<HastagOption>(
-      hashtagSortOptions.find((opt) => opt.label === place?.tags[0]) ??
-        hashtagSortOptions[0],
-    );
+    useState<HastagOption>(hashtagSortOptions[0]);
   const [selectedHastagOption2, setSelectedHastagOption2] =
-    useState<HastagOption>(
-      hashtagSortOptions.find((opt) => opt.label === place?.tags[1]) ??
-        hashtagSortOptions[1],
-    );
-  const [description, setDescription] = useState(place?.description);
-  const [existingImages] = useState<string[]>([
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQeNUqNW8AKMUzUTRJGr8xOny5UVwFRuDaCeZ66Mp9Uog&s",
-  ]);
+    useState<HastagOption>(hashtagSortOptions[1]);
+  const [description, setDescription] = useState("");
   const [newImages, setNewImages] = useState<string[]>([]);
 
+  useEffect(() => {
+    const fetchPlaceDetail = async () => {
+      try {
+        const data = await getPlaceDetail(Number(placeId));
+        setPlace(data);
+        setDescription(data.description);
+        setSelectedHastagOption1(
+          hashtagSortOptions.find((opt) => opt.label === data.tags[0]) ??
+            hashtagSortOptions[0],
+        );
+        setSelectedHastagOption2(
+          hashtagSortOptions.find((opt) => opt.label === data.tags[1]) ??
+            hashtagSortOptions[1],
+        );
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchPlaceDetail();
+  }, [placeId]);
+
   if (!place) {
-    return <main>...장소를 찾을 수 없어요...</main>;
+    return (
+      <main className="flex h-dvh items-center justify-center bg-gray-10">
+        <p className="text-body-01 text-gray-70">장소를 찾을 수 없어요.</p>
+      </main>
+    );
   }
+
+  const handleSave = async (): Promise<{
+    placeId: number;
+  } | null> => {
+    if (!place) return null;
+
+    const updated = await patchPlaceInfo(
+      place.placeId,
+      [selectedHastagOption1.label, selectedHastagOption2.label],
+      description,
+      [...existingImages, ...newImages],
+    );
+    setDescription(updated.description);
+
+    return { placeId: place.placeId };
+  };
+
+  // 기존 이미지
+  const existingImages = place.images.map((image) => image.imageUrl);
 
   return (
     <main className="flex flex-col h-dvh gap-5  bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -90,16 +127,16 @@ export default function PlaceEditPage() {
       <section className="flex justify-center">
         <div className="flex flex-col w-[360px] px-2.5 py-5 gap-2.5 bg-white rounded-lg">
           <div className="flex gap-1 items-center">
-            <LineBadge line={place?.line.id as SubwayLine} />
+            <LineBadge line={place?.representativeLine.id as SubwayLine} />
             <span className="text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-100">
-              {place.station}
+              {place.stationName}
             </span>
           </div>
           <span className="text-headline font-semibold leading-[1.4] tracking-[-0.6px] text-gray-100">
-            {place.name}
+            {place.placeName}
           </span>
           <DetailTagChip
-            content={CATEGORY_LABELS[place.category]}
+            content={CATEGORY_LABELS[place.categoryCode]}
             variant="secondary"
           />
         </div>
@@ -147,7 +184,7 @@ export default function PlaceEditPage() {
               한 줄 소개
             </span>
             <textarea
-              placeholder={place.description}
+              placeholder={description}
               value={description}
               className="p-4 rounded-lg bg-white outline-none min-h-[90px] resize-none caret-primary-50"
               onChange={(e) => setDescription(e.target.value)}
@@ -176,7 +213,12 @@ export default function PlaceEditPage() {
         </div>
       </div>
       <section className="fixed inset-x-0 bottom-[calc(var(--safe-bottom)+10px)] z-10 flex items-center justify-center">
-        <CTAButton onClick={() => navigate(`/admin/place/${placeId}`)}>
+        <CTAButton
+          onClick={async () => {
+            const result = await handleSave();
+            if (result) navigate(`/admin/place/${result.placeId}`);
+          }}
+        >
           수정 완료
         </CTAButton>
       </section>

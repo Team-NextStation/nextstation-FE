@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import BackIcon from "@/assets/back.svg?react";
 import PlacePreviewCard from "./components/PlacePreviewCard";
-import { useMemo, useState } from "react";
-import { mockPlaces } from "./data/mockPlaces";
+import { useEffect, useState } from "react";
+import { getSearchPlaces, type Place } from "@/api/admin";
+import BaseLoading from "@/components/BaseLoading";
 
 const CATEGORY_STYLE_LABELS: Record<string, string> = {
   CULTURE: "문화공간",
@@ -11,19 +12,80 @@ const CATEGORY_STYLE_LABELS: Record<string, string> = {
   WALK: "산책포인트",
 };
 
+interface SearchResultState {
+  keyword: string;
+  results: Place[];
+  error: string | null;
+}
+
 export default function SearchPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
+  // 마지막으로 "응답이 온" 검색어와 그 결과를 같이 저장
+  const [searchResult, setSearchResult] = useState<SearchResultState | null>(
+    null,
+  );
+  const keyword = query.trim();
+
+  // 타이핑이 멈추고 300ms 지나야 실제로 반영되는 검색어
+  const [debouncedKeyword, setDebouncedKeyword] = useState("");
 
   const handleBackClick = () => {
     navigate(-1);
   };
 
-  const results = useMemo(() => {
-    const keyword = query.trim();
-    if (!keyword) return mockPlaces;
-    return mockPlaces.filter((place) => place.name.includes(keyword));
-  }, [query]);
+  // 1) keyword가 바뀔 때마다 300ms 뒤에 debouncedKeyword를 갱신
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedKeyword(keyword);
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [keyword]);
+
+  // 2) debouncedKeyword가 바뀔 때만 실제로 검색 API 호출
+  useEffect(() => {
+    // 검색어 없으면 전용 검색 API 자체를 안 부름 (state도 건드리지 않음)
+    if (!debouncedKeyword) return;
+
+    let isCancelled = false;
+
+    const fetchSearchResults = async () => {
+      try {
+        const data = await getSearchPlaces(debouncedKeyword);
+
+        if (isCancelled) return;
+        setSearchResult({
+          keyword: debouncedKeyword,
+          results: data.places,
+          error: null,
+        });
+      } catch (e) {
+        if (isCancelled) return;
+        console.error(e);
+        setSearchResult({
+          keyword: debouncedKeyword,
+          results: [],
+          error: "장소 검색 결과를 불러오지 못했습니다.",
+        });
+      }
+    };
+
+    fetchSearchResults();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedKeyword]);
+
+  const hasFreshResult =
+    debouncedKeyword !== "" && searchResult?.keyword === debouncedKeyword;
+  const displayedResults = hasFreshResult ? searchResult.results : [];
+  const displayedError = hasFreshResult ? searchResult.error : null;
+  const displayedLoading = debouncedKeyword !== "" && !hasFreshResult;
+
+  if (displayedLoading) return <BaseLoading />;
+  if (displayedError) return <p>{displayedError}</p>;
 
   return (
     <main className="flex flex-col h-dvh gap-[17px] bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -51,27 +113,27 @@ export default function SearchPage() {
       {/* result */}
       <section className="flex justify-center">
         <div className="flex flex-col gap-2 w-[360px]">
-          {results.map((place) => (
+          {displayedResults.map((place) => (
             <button
-              key={place.id}
+              key={place.placeId}
               type="button"
               className="w-full border-0 bg-transparent p-0 text-left"
-              onClick={() => navigate(`/admin/place/${place.id}`)}
+              onClick={() => navigate(`/admin/place/${place.placeId}`)}
             >
               <PlacePreviewCard
-                key={place.id}
-                name={place.name}
-                station={place.station}
-                line={place.line}
+                key={place.placeId}
+                name={place.placeName}
+                station={place.representativeLine.name}
+                line={place.representativeLine}
                 imageUrl={place.imageUrl}
-                category={CATEGORY_STYLE_LABELS[place.category]}
+                category={CATEGORY_STYLE_LABELS[place.categoryCode]}
                 tags={place.tags}
                 description={place.description}
                 status={place.status}
               />
             </button>
           ))}
-          {query.trim() && results.length === 0 && (
+          {hasFreshResult && displayedResults.length === 0 && (
             <p className="text-center text-body-01 text-gray-70 pt-10">
               검색 결과가 없어요
             </p>
