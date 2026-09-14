@@ -1,6 +1,6 @@
 import { fetchWithRequiredAuth, getAccessToken } from "@/api/auth";
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 
 export type ImageFolder = "JOURNAL" | "PROFILE";
 
