@@ -54,9 +54,10 @@ export default function PlaceListPage() {
   const [placesError, setPlacesError] = useState<string | null>(null);
   const [selectedLine, setSelectedLine] = useState("전체");
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
-  const [selectedStationId, setSelectedStationId] = useState<number | null>(
-    null,
-  );
+  const [stationLookup, setStationLookup] = useState<{
+    stationName: string;
+    stationId: number | null;
+  } | null>(null);
   const [isStationMenuOpen, setIsStationMenuOpen] = useState(false);
 
   const [selectedCategoryOption, setSelectedCategoryOption] = useState<
@@ -71,10 +72,7 @@ export default function PlaceListPage() {
 
   // 선택한 역 이름 -> stationId 변환
   useEffect(() => {
-    if (!selectedStation) {
-      setSelectedStationId(null);
-      return;
-    }
+    if (!selectedStation) return;
 
     let isCancelled = false;
 
@@ -84,18 +82,26 @@ export default function PlaceListPage() {
         const matched = stations.find(
           (station) => station.name === selectedStation,
         );
-        setSelectedStationId(matched?.id ?? null);
+        setStationLookup({
+          stationName: selectedStation,
+          stationId: matched?.id ?? null,
+        });
       })
       .catch((e) => {
         if (isCancelled) return;
         console.error(e);
-        setSelectedStationId(null);
+        setStationLookup({ stationName: selectedStation, stationId: null });
       });
 
     return () => {
       isCancelled = true;
     };
   }, [selectedStation]);
+
+  const selectedStationId =
+    selectedStation && stationLookup?.stationName === selectedStation
+      ? stationLookup.stationId
+      : null;
 
   useEffect(() => {
     const fetchInitialPlaces = async () => {
