@@ -12,11 +12,13 @@ import DeleteIcon from "@/assets/delete.svg?react";
 interface PlacePhotoUploaderProps {
   photos: string[];
   onChange: (photos: string[]) => void;
+  kakaoPlaceId: string;
 }
 
 export default function PlacePhotoUploader({
   photos,
   onChange,
+  kakaoPlaceId,
 }: PlacePhotoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -35,7 +37,8 @@ export default function PlacePhotoUploader({
     try {
       const fileNames = files.map((file) => createUploadFileName(file));
       const presignedItems = await getPresignedUrlsBatch({
-        folder: "JOURNAL",
+        folder: "STATIC_PLACE",
+        kakaoPlaceId,
         fileNames,
       });
 
@@ -86,7 +89,13 @@ export default function PlacePhotoUploader({
       <button
         type="button"
         disabled={isUploading}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => {
+          if (!kakaoPlaceId) {
+            showToast({ message: "장소를 먼저 선택해주세요." });
+            return;
+          }
+          inputRef.current?.click();
+        }}
         className="flex w-[108px] h-[108px] items-center justify-center rounded-lg bg-secondary-10 border border-dashed border-secondary-40 outline-none"
       >
         <PlusIcon className="size-3" />
