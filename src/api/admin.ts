@@ -1,6 +1,7 @@
 import { fetchWithRequiredAuth } from "./auth";
 import type { StatusChipVariant } from "@/pages/admin/components/StatusChip";
 import type { SubwayLine } from "@/types/subway";
+import { API_BASE_URL } from "./config";
 
 export interface Line {
   id: SubwayLine;
@@ -34,8 +35,6 @@ export interface PlaceList {
   nextCursor: string | null;
   hasNext: boolean;
 }
-
-const API_BASE_URL = "";
 
 // 관리자 장소 목록 조회
 export async function getPlaces(
@@ -202,6 +201,107 @@ export async function patchPlaceStatus(
       ? Object.values(errorJson.reasons)[0]
       : undefined;
     throw new Error(reason ?? errorJson?.message ?? "장소 상태 변경 실패");
+  }
+
+  const json = await response.json();
+
+  return json.data;
+}
+
+export interface KakaoPlace {
+  kakaoPlaceId: string;
+  placeName: string;
+  address: string;
+  contactNumber: string;
+  xCoordinate: number;
+  yCoordinate: number;
+  kakaoPlaceUrl: string;
+}
+export interface KakaoSearchResult {
+  places: KakaoPlace[];
+}
+
+// 관리자 카카오 장소 검색
+export async function getKakaoSearch(
+  stationId?: number,
+  keyword?: string,
+  address?: string,
+): Promise<KakaoSearchResult> {
+  const params = new URLSearchParams();
+  if (address !== undefined) params.set("address", address);
+  if (keyword !== undefined) params.set("keyword", keyword);
+  if (stationId !== undefined) params.set("stationId", stationId.toString());
+
+  const query = params.toString();
+  const url = `${API_BASE_URL}/api/v1/admin/places/kakao-search${query ? `?${query}` : ""}`;
+  const response = await fetchWithRequiredAuth(url);
+
+  if (!response.ok) {
+    throw new Error("카카오 장소 목록 검색 실패");
+  }
+
+  const json = await response.json();
+
+  return json.data;
+}
+
+export interface PlaceRequest {
+  stationId: number;
+  categoryCode: string;
+  description: string;
+  tagNames: string[];
+  imageUrls: string[];
+  kakaoPlaceId: string;
+  placeName: string;
+  address: string;
+  contactNumber: string;
+  xCoordinate: number;
+  yCoordinate: number;
+}
+
+// 관리자 장소 등록
+export async function createPlace({
+  stationId,
+  categoryCode,
+  description,
+  tagNames,
+  imageUrls,
+  kakaoPlaceId,
+  placeName,
+  address,
+  contactNumber,
+  xCoordinate,
+  yCoordinate,
+}: PlaceRequest): Promise<PlaceRequest> {
+  const response = await fetchWithRequiredAuth(
+    `${API_BASE_URL}/api/v1/admin/places`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        stationId,
+        categoryCode,
+        description,
+        tagNames,
+        imageUrls,
+        kakaoPlaceId,
+        placeName,
+        address,
+        contactNumber,
+        xCoordinate,
+        yCoordinate,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorJson = await response.json().catch(() => null);
+    const reason = errorJson?.reasons
+      ? Object.values(errorJson.reasons)[0]
+      : undefined;
+    throw new Error(reason ?? errorJson?.message ?? "장소 등록 실패");
   }
 
   const json = await response.json();
