@@ -10,6 +10,7 @@ import {
   patchPlaceStatus,
   type placeDetail,
 } from "@/api/admin";
+import BaseLoading from "@/components/BaseLoading";
 
 // 휴지통으로부터 진입
 
@@ -17,6 +18,7 @@ export default function TrashDetailPage() {
   const navigate = useNavigate();
   const { placeId } = useParams();
   const [place, setPlace] = useState<placeDetail>();
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const isRejected = place?.status === "REJECTED";
 
@@ -27,6 +29,8 @@ export default function TrashDetailPage() {
         setPlace(data);
       } catch (e) {
         console.error(e);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchPlaceDetail();
@@ -35,6 +39,8 @@ export default function TrashDetailPage() {
   const handleBackClick = () => {
     navigate(-1);
   };
+
+  if (isLoading) return <BaseLoading />;
 
   if (!place) {
     return (

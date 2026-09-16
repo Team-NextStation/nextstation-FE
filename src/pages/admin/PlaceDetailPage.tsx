@@ -12,6 +12,7 @@ import {
   patchPlaceStatus,
   type placeDetail,
 } from "@/api/admin";
+import BaseLoading from "@/components/BaseLoading";
 
 // 장소로부터 진입
 
@@ -19,6 +20,7 @@ export default function PlaceDetailPage() {
   const navigate = useNavigate();
   const { placeId } = useParams();
   const [place, setPlace] = useState<placeDetail>();
+  const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isPending = place?.status === "PENDING";
   const [isRejectedModalOpen, setIsRejectedModalOpen] = useState(false);
@@ -32,10 +34,14 @@ export default function PlaceDetailPage() {
         setPlace(data);
       } catch (e) {
         console.error(e);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchPlaceDetail();
   }, [placeId]);
+
+  if (isLoading) return <BaseLoading />;
 
   if (!place) {
     return (

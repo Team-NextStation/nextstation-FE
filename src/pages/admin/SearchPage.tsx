@@ -3,7 +3,6 @@ import BackIcon from "@/assets/back.svg?react";
 import PlacePreviewCard from "./components/PlacePreviewCard";
 import { useEffect, useState } from "react";
 import { getSearchPlaces, type Place } from "@/api/admin";
-import BaseLoading from "@/components/BaseLoading";
 
 const CATEGORY_STYLE_LABELS: Record<string, string> = {
   CULTURE: "문화공간",
@@ -21,31 +20,30 @@ interface SearchResultState {
 export default function SearchPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  // 마지막으로 "응답이 온" 검색어와 그 결과를 같이 저장
+  // 마지막으로 응답이 온 검색어와 그 결과를 같이 저장
   const [searchResult, setSearchResult] = useState<SearchResultState | null>(
     null,
   );
   const keyword = query.trim();
 
-  // 타이핑이 멈추고 300ms 지나야 실제로 반영되는 검색어
+  // 디바운스
   const [debouncedKeyword, setDebouncedKeyword] = useState("");
 
   const handleBackClick = () => {
     navigate(-1);
   };
 
-  // 1) keyword가 바뀔 때마다 300ms 뒤에 debouncedKeyword를 갱신
+  // keyword가 변경되고 500ms 뒤에 debouncedKeyword를 갱신
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       setDebouncedKeyword(keyword);
-    }, 300);
+    }, 500);
 
     return () => window.clearTimeout(timeoutId);
   }, [keyword]);
 
-  // 2) debouncedKeyword가 바뀔 때만 실제로 검색 API 호출
+  // debouncedKeyword가 바뀔 때만 실제로 검색 API 호출
   useEffect(() => {
-    // 검색어 없으면 전용 검색 API 자체를 안 부름 (state도 건드리지 않음)
     if (!debouncedKeyword) return;
 
     let isCancelled = false;
@@ -82,9 +80,7 @@ export default function SearchPage() {
     debouncedKeyword !== "" && searchResult?.keyword === debouncedKeyword;
   const displayedResults = hasFreshResult ? searchResult.results : [];
   const displayedError = hasFreshResult ? searchResult.error : null;
-  const displayedLoading = debouncedKeyword !== "" && !hasFreshResult;
 
-  if (displayedLoading) return <BaseLoading />;
   if (displayedError) return <p>{displayedError}</p>;
 
   return (

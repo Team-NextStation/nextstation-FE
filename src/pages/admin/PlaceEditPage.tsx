@@ -11,6 +11,7 @@ import { CATEGORY_LABELS } from "./data/mockPlaces";
 import type { SubwayLine } from "@/types/subway";
 import type { placeDetail } from "@/api/admin";
 import { getPlaceDetail, patchPlaceInfo } from "@/api/admin";
+import BaseLoading from "@/components/BaseLoading";
 
 type HastagOption = {
   label: string;
@@ -42,8 +43,8 @@ export default function PlaceEditPage() {
   const navigate = useNavigate();
   const { placeId } = useParams();
   const [place, setPlace] = useState<placeDetail>();
+  const [isLoading, setIsLoading] = useState(true);
 
-  const isDirty = true; // TODO : 추후 setIsDirty 추가
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   const [selectedHastagOption1, setSelectedHastagOption1] =
@@ -51,6 +52,7 @@ export default function PlaceEditPage() {
   const [selectedHastagOption2, setSelectedHastagOption2] =
     useState<HastagOption>(hashtagSortOptions[1]);
   const [description, setDescription] = useState("");
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newImages, setNewImages] = useState<string[]>([]);
 
   useEffect(() => {
@@ -59,20 +61,25 @@ export default function PlaceEditPage() {
         const data = await getPlaceDetail(Number(placeId));
         setPlace(data);
         setDescription(data.description);
+        setExistingImages(data.images.map((image) => image.imageUrl));
         setSelectedHastagOption1(
-          hashtagSortOptions.find((opt) => opt.label === data.tags[0]) ??
+          hashtagSortOptions.find((opt) => opt.value === data.tags[0]) ??
             hashtagSortOptions[0],
         );
         setSelectedHastagOption2(
-          hashtagSortOptions.find((opt) => opt.label === data.tags[1]) ??
+          hashtagSortOptions.find((opt) => opt.value === data.tags[1]) ??
             hashtagSortOptions[1],
         );
       } catch (e) {
         console.error(e);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchPlaceDetail();
   }, [placeId]);
+
+  if (isLoading) return <BaseLoading />;
 
   if (!place) {
     return (
@@ -89,17 +96,23 @@ export default function PlaceEditPage() {
 
     const updated = await patchPlaceInfo(
       place.placeId,
-      [selectedHastagOption1.label, selectedHastagOption2.label],
+      [selectedHastagOption1.value, selectedHastagOption2.value],
       description,
-      [...existingImages, ...newImages],
+      newImages,
     );
     setDescription(updated.description);
 
     return { placeId: place.placeId };
   };
 
-  // 기존 이미지
-  const existingImages = place.images.map((image) => image.imageUrl);
+  // kakaoPlaceUrl 끝의 숫자가 kakaoPlaceId (placeDetail 응답엔 별도 필드로 안 내려옴)
+  const kakaoPlaceId = place.kakaoPlaceUrl.split("/").pop() ?? "";
+
+  const isDirty =
+    description !== place.description ||
+    selectedHastagOption1.value !== place.tags[0] ||
+    selectedHastagOption2.value !== place.tags[1] ||
+    newImages.length > 0;
 
   return (
     <main className="flex flex-col h-dvh gap-5  bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -110,6 +123,7 @@ export default function PlaceEditPage() {
             setIsConfirmModalOpen(true);
             return;
           }
+          navigate(`/admin/place/${placeId}`);
         }}
       />
 
@@ -196,11 +210,15 @@ export default function PlaceEditPage() {
               장소 사진 추가
             </span>
             <div className="grid grid-cols-3 gap-4">
-              <PlacePhotoUploader photos={newImages} onChange={setNewImages} />
-              {existingImages.map((image, index) => (
+              <PlacePhotoUploader
+                photos={newImages}
+                onChange={setNewImages}
+                kakaoPlaceId={kakaoPlaceId}
+              />
+              {existingImages.map((image) => (
                 <div
                   className="flex w-[108px] h-[108px] rounded-lg overflow-hidden"
-                  key={index}
+                  key={image}
                 >
                   <img
                     src={image}
@@ -215,8 +233,14 @@ export default function PlaceEditPage() {
       <section className="fixed inset-x-0 bottom-[calc(var(--safe-bottom)+10px)] z-10 flex items-center justify-center">
         <CTAButton
           onClick={async () => {
-            const result = await handleSave();
-            if (result) navigate(`/admin/place/${result.placeId}`);
+            try {
+              const result = await handleSave();
+              if (result) {
+                navigate(`/admin/place/${result.placeId}`, { replace: true });
+              }
+            } catch (e) {
+              console.error(e);
+            }
           }}
         >
           수정 완료

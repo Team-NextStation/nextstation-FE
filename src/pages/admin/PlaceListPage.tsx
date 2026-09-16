@@ -12,6 +12,7 @@ import ArrowDown from "@/assets/arrow-down.svg?react";
 import { CATEGORY_LABELS } from "./data/mockPlaces";
 import type { StatusChipVariant } from "./components/StatusChip";
 import { getPlaces, type Place } from "@/api/admin";
+import { searchStations } from "@/api/stations";
 import { useInView } from "react-intersection-observer";
 import BaseLoading from "@/components/BaseLoading";
 
@@ -39,6 +40,10 @@ const statusSortOptions: StatusOption[] = [
   { label: "대기", value: "PENDING" },
 ];
 
+const ACTIVE_STATUSES = statusSortOptions
+  .map((option) => option.value)
+  .filter((value): value is StatusChipVariant => value !== "ALL");
+
 export default function PlaceListPage() {
   const navigate = useNavigate();
   const [places, setPlaces] = useState<Place[]>([]);
@@ -49,6 +54,9 @@ export default function PlaceListPage() {
   const [placesError, setPlacesError] = useState<string | null>(null);
   const [selectedLine, setSelectedLine] = useState("전체");
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
+  const [selectedStationId, setSelectedStationId] = useState<number | null>(
+    null,
+  );
   const [isStationMenuOpen, setIsStationMenuOpen] = useState(false);
 
   const [selectedCategoryOption, setSelectedCategoryOption] = useState<
@@ -58,18 +66,49 @@ export default function PlaceListPage() {
     StatusOption["value"] | null
   >(null);
 
+  const selectedLineId =
+    selectedLine === "전체" ? undefined : Number(selectedLine.replace("호선", ""));
+
+  // 선택한 역 이름 -> stationId 변환
+  useEffect(() => {
+    if (!selectedStation) {
+      setSelectedStationId(null);
+      return;
+    }
+
+    let isCancelled = false;
+
+    searchStations(selectedStation)
+      .then((stations) => {
+        if (isCancelled) return;
+        const matched = stations.find(
+          (station) => station.name === selectedStation,
+        );
+        setSelectedStationId(matched?.id ?? null);
+      })
+      .catch((e) => {
+        if (isCancelled) return;
+        console.error(e);
+        setSelectedStationId(null);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedStation]);
+
   useEffect(() => {
     const fetchInitialPlaces = async () => {
       try {
         const data = await getPlaces(
-          undefined,
-          undefined,
+          selectedLineId,
+          selectedStationId ?? undefined,
           selectedCategoryOption && selectedCategoryOption !== "ALL"
             ? selectedCategoryOption
             : undefined,
           selectedStatusOption && selectedStatusOption !== "ALL"
             ? [selectedStatusOption]
-            : undefined,
+            : ACTIVE_STATUSES,
         );
 
         setPlaces(data.places);
@@ -84,7 +123,7 @@ export default function PlaceListPage() {
     };
 
     fetchInitialPlaces();
-  }, [selectedCategoryOption, selectedStatusOption]);
+  }, [selectedLineId, selectedStationId, selectedCategoryOption, selectedStatusOption]);
 
   // 스크롤로 다음 페이지 불러오기
   const loadMorePlaces = async () => {
@@ -92,14 +131,14 @@ export default function PlaceListPage() {
     try {
       setIsLoadingMore(true);
       const data = await getPlaces(
-        undefined,
-        undefined,
+        selectedLineId,
+        selectedStationId ?? undefined,
         selectedCategoryOption && selectedCategoryOption !== "ALL"
           ? selectedCategoryOption
           : undefined,
         selectedStatusOption && selectedStatusOption !== "ALL"
           ? [selectedStatusOption]
-          : undefined,
+          : ACTIVE_STATUSES,
         nextCursor,
       );
       setPlaces((prev) => [...prev, ...data.places]);
@@ -188,7 +227,10 @@ export default function PlaceListPage() {
             <CategoryTabs
               categories={LINES}
               selected={selectedLine}
-              onSelect={setSelectedLine}
+              onSelect={(line) => {
+                setSelectedLine(line);
+                setSelectedStation(null);
+              }}
             />
           </div>
           <div className="flex justify-between py-2">
