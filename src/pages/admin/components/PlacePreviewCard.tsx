@@ -1,13 +1,13 @@
 import TagChip from "@/pages/place/components/TagChip";
 import StatusChip, { type StatusChipVariant } from "./StatusChip";
 import LineBadge from "@/components/LineBadge";
-import type { SubwayLine, SubwayLineInfo } from "@/types/subway";
+import type { SubwayLineInfo } from "@/types/subway";
 import EmptyImage from "@/assets/admin/empty-image.svg?react";
 
 interface PlacePreviewCardProps {
   name?: string;
   station?: string;
-  line?: SubwayLineInfo;
+  line?: SubwayLineInfo | null;
   imageUrl?: string | null;
   category?: string;
   tags?: string[];
@@ -44,7 +44,7 @@ export default function PlacePreviewCard({
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
             <div className="flex gap-1">
-              <LineBadge line={line?.id as SubwayLine} />
+              {line && <LineBadge line={line.id} />}
               <span className="flex items-center text-gray-100 text-body-02 leading-[1.4] tracking-[-0.3px]">
                 {station}
               </span>

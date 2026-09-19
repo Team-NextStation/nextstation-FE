@@ -174,7 +174,7 @@ export default function PlaceListPage() {
   const sortedPlaces = places.filter(
     (place) =>
       (selectedLine === "전체" ||
-        place.representativeLine.name === selectedLine) &&
+        place.representativeLine?.name === selectedLine) &&
       (!selectedStation || place.stationName === selectedStation) &&
       (!selectedCategoryOption ||
         selectedCategoryOption === "ALL" ||

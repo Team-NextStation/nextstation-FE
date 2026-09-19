@@ -8,7 +8,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import PlacePhotoUploader from "./components/PlacePhotoUploader";
 import ConfirmModal from "@/components/ConfirmModal";
 import { CATEGORY_LABELS } from "./data/mockPlaces";
-import type { SubwayLine } from "@/types/subway";
 import type { placeDetail } from "@/api/admin";
 import { getPlaceDetail, patchPlaceInfo } from "@/api/admin";
 import BaseLoading from "@/components/BaseLoading";
@@ -106,7 +105,7 @@ export default function PlaceEditPage() {
   };
 
   // kakaoPlaceUrl 끝의 숫자가 kakaoPlaceId (placeDetail 응답엔 별도 필드로 안 내려옴)
-  const kakaoPlaceId = place.kakaoPlaceUrl.split("/").pop() ?? "";
+  const kakaoPlaceId = place.kakaoPlaceUrl?.split("/").pop() ?? "";
 
   const isDirty =
     description !== place.description ||
@@ -141,7 +140,9 @@ export default function PlaceEditPage() {
       <section className="flex justify-center">
         <div className="flex flex-col w-[360px] px-2.5 py-5 gap-2.5 bg-white rounded-lg">
           <div className="flex gap-1 items-center">
-            <LineBadge line={place?.representativeLine.id as SubwayLine} />
+            {place.representativeLine && (
+              <LineBadge line={place.representativeLine.id} />
+            )}
             <span className="text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-100">
               {place.stationName}
             </span>

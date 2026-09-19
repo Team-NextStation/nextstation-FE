@@ -16,7 +16,7 @@ export interface Station {
 
 export interface Place {
   placeId: number;
-  representativeLine: Line;
+  representativeLine: Line | null;
   stationId: number;
   stationName: string;
   categoryCode: string;
@@ -97,13 +97,13 @@ export interface Image {
 export interface placeDetail {
   placeId: number;
   placeName: string;
-  representativeLine: Line;
+  representativeLine: Line | null;
   stationId: number;
   stationName: string;
   address: string;
   xCoordinate: number;
   yCoordinate: number;
-  kakaoPlaceUrl: string;
+  kakaoPlaceUrl: string | null;
   status: StatusChipVariant;
   categoryCode: string;
   categoryName: string;

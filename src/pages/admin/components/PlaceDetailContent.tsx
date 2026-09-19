@@ -1,5 +1,4 @@
 import LineBadge from "@/components/LineBadge";
-import type { SubwayLine } from "@/types/subway";
 import DetailTagChip from "./DetailTagChip";
 import { CATEGORY_LABELS } from "../data/mockPlaces";
 import type { placeDetail } from "@/api/admin";
@@ -14,7 +13,9 @@ export default function PlaceDetailContent({ place }: { place: placeDetail }) {
       {/* text-info */}
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center gap-1">
-          <LineBadge line={place.representativeLine.id as SubwayLine} />
+          {place.representativeLine && (
+            <LineBadge line={place.representativeLine.id} />
+          )}
           <span className="text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-100">
             {place.stationName}
           </span>
@@ -31,14 +32,16 @@ export default function PlaceDetailContent({ place }: { place: placeDetail }) {
           <span className="text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-80">
             X {place.xCoordinate} ∙ Y {place.yCoordinate}
           </span>
-          <a
-            href={place.kakaoPlaceUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-80 underline"
-          >
-            {place.kakaoPlaceUrl}
-          </a>
+          {place.kakaoPlaceUrl && (
+            <a
+              href={place.kakaoPlaceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-80 underline"
+            >
+              {place.kakaoPlaceUrl}
+            </a>
+          )}
         </div>
 
         {/* tag + description */}
