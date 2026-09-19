@@ -4,13 +4,17 @@ import Close from "@/assets/admin/close.svg?react";
 import PlacePreviewCard from "./components/PlacePreviewCard";
 import CategoryTabs from "../course/components/CategoryTabs";
 import { LINES, stationsByLine } from "@/data/stationsByLine";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Dropdown from "../admin/components/Dropdown";
 import Search from "@/assets/admin/search.svg?react";
 import ArrowDown from "@/assets/arrow-down.svg?react";
-import { CATEGORY_LABELS, mockPlaces } from "./data/mockPlaces";
+import { CATEGORY_LABELS } from "./data/mockPlaces";
 import type { StatusChipVariant } from "./components/StatusChip";
+import { getPlaces, type Place } from "@/api/admin";
+import { searchStations } from "@/api/stations";
+import { useInView } from "react-intersection-observer";
+import BaseLoading from "@/components/BaseLoading";
 
 type CategoryOption = {
   label: string;
@@ -32,32 +36,152 @@ type StatusOption = {
 
 const statusSortOptions: StatusOption[] = [
   { label: "전체", value: "ALL" },
-  { label: "등록", value: "approved" },
-  { label: "대기", value: "pending" },
+  { label: "등록", value: "APPROVED" },
+  { label: "대기", value: "PENDING" },
 ];
+
+const ACTIVE_STATUSES = statusSortOptions
+  .map((option) => option.value)
+  .filter((value): value is StatusChipVariant => value !== "ALL");
 
 export default function PlaceListPage() {
   const navigate = useNavigate();
-  // const placeId = 1; // placeId 하드코딩
-  const places = mockPlaces.filter(
-    (place) => place.status === "approved" || place.status === "pending",
-  );
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasNext, setHasNext] = useState(false);
+  const [isPlacesLoading, setIsPlacesLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [placesError, setPlacesError] = useState<string | null>(null);
   const [selectedLine, setSelectedLine] = useState("전체");
-  const [station, setStation] = useState<string | null>(null);
+  const [selectedStation, setSelectedStation] = useState<string | null>(null);
+  const [stationLookup, setStationLookup] = useState<{
+    stationName: string;
+    stationId: number | null;
+  } | null>(null);
   const [isStationMenuOpen, setIsStationMenuOpen] = useState(false);
-  const [selectedcategoryOption, setSelectedCategoryOption] =
-    useState<CategoryOption>(categorySortOptions[0]);
-  const [selectedStatusOption, setSelectedStatusOption] =
-    useState<StatusOption>(statusSortOptions[0]);
+
+  const [selectedCategoryOption, setSelectedCategoryOption] = useState<
+    CategoryOption["value"] | null
+  >(null);
+  const [selectedStatusOption, setSelectedStatusOption] = useState<
+    StatusOption["value"] | null
+  >(null);
+
+  const selectedLineId =
+    selectedLine === "전체" ? undefined : Number(selectedLine.replace("호선", ""));
+
+  // 선택한 역 이름 -> stationId 변환
+  useEffect(() => {
+    if (!selectedStation) return;
+
+    let isCancelled = false;
+
+    searchStations(selectedStation)
+      .then((stations) => {
+        if (isCancelled) return;
+        const matched = stations.find(
+          (station) => station.name === selectedStation,
+        );
+        setStationLookup({
+          stationName: selectedStation,
+          stationId: matched?.id ?? null,
+        });
+      })
+      .catch((e) => {
+        if (isCancelled) return;
+        console.error(e);
+        setStationLookup({ stationName: selectedStation, stationId: null });
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedStation]);
+
+  const selectedStationId =
+    selectedStation && stationLookup?.stationName === selectedStation
+      ? stationLookup.stationId
+      : null;
+
+  useEffect(() => {
+    const fetchInitialPlaces = async () => {
+      try {
+        const data = await getPlaces(
+          selectedLineId,
+          selectedStationId ?? undefined,
+          selectedCategoryOption && selectedCategoryOption !== "ALL"
+            ? selectedCategoryOption
+            : undefined,
+          selectedStatusOption && selectedStatusOption !== "ALL"
+            ? [selectedStatusOption]
+            : ACTIVE_STATUSES,
+        );
+
+        setPlaces(data.places);
+        setNextCursor(data.nextCursor);
+        setHasNext(data.hasNext);
+      } catch (e) {
+        console.error(e);
+        setPlacesError("장소 목록을 불러오지 못했습니다.");
+      } finally {
+        setIsPlacesLoading(false);
+      }
+    };
+
+    fetchInitialPlaces();
+  }, [selectedLineId, selectedStationId, selectedCategoryOption, selectedStatusOption]);
+
+  // 스크롤로 다음 페이지 불러오기
+  const loadMorePlaces = async () => {
+    if (!nextCursor) return;
+    try {
+      setIsLoadingMore(true);
+      const data = await getPlaces(
+        selectedLineId,
+        selectedStationId ?? undefined,
+        selectedCategoryOption && selectedCategoryOption !== "ALL"
+          ? selectedCategoryOption
+          : undefined,
+        selectedStatusOption && selectedStatusOption !== "ALL"
+          ? [selectedStatusOption]
+          : ACTIVE_STATUSES,
+        nextCursor,
+      );
+      setPlaces((prev) => [...prev, ...data.places]);
+      setNextCursor(data.nextCursor);
+      setHasNext(data.hasNext);
+    } catch (e) {
+      console.error(e);
+      setPlacesError("장소 목록을 불러오지 못했습니다.");
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const { ref } = useInView({
+    threshold: 0.5,
+    rootMargin: "200px",
+    onChange: (inView) => {
+      if (inView && hasNext && !isLoadingMore) {
+        loadMorePlaces();
+      }
+    },
+  });
+
+  if (isPlacesLoading) return <BaseLoading />;
+  if (placesError) return <p>{placesError}</p>;
 
   const sortedPlaces = places.filter(
     (place) =>
-      (selectedLine === "전체" || place.line.name === selectedLine) &&
-      (!station || place.station === station) &&
-      (selectedcategoryOption.value === "ALL" ||
-        place.category === selectedcategoryOption.value) &&
-      (selectedStatusOption.value === "ALL" ||
-        place.status === selectedStatusOption.value),
+      (selectedLine === "전체" ||
+        place.representativeLine?.name === selectedLine) &&
+      (!selectedStation || place.stationName === selectedStation) &&
+      (!selectedCategoryOption ||
+        selectedCategoryOption === "ALL" ||
+        place.categoryCode === selectedCategoryOption) &&
+      (!selectedStatusOption ||
+        selectedStatusOption === "ALL" ||
+        place.status === selectedStatusOption),
   );
 
   return (
@@ -109,7 +233,10 @@ export default function PlaceListPage() {
             <CategoryTabs
               categories={LINES}
               selected={selectedLine}
-              onSelect={setSelectedLine}
+              onSelect={(line) => {
+                setSelectedLine(line);
+                setSelectedStation(null);
+              }}
             />
           </div>
           <div className="flex justify-between py-2">
@@ -119,7 +246,9 @@ export default function PlaceListPage() {
               onClick={() => setIsStationMenuOpen(true)}
             >
               <span className="text-gray-70 text-body-01 font-semibold leading-[1.4] tracking-[-0.35px]">
-                {station ? station.replace(/역$/, "") : "역 선택"}
+                {selectedStation
+                  ? selectedStation.replace(/역$/, "")
+                  : "역 선택"}
               </span>
               <ArrowDown
                 className={`flex w-5 h-5 items-center justify-center ${isStationMenuOpen ? "rotate-180" : ""}`}
@@ -127,23 +256,25 @@ export default function PlaceListPage() {
             </button>
             <Dropdown
               options={categorySortOptions}
-              value={selectedcategoryOption.value}
+              value={selectedCategoryOption ?? ""}
               onSelect={(value) => {
                 const option = categorySortOptions.find(
                   (opt) => opt.value === value,
                 );
-                if (option) setSelectedCategoryOption(option);
+                if (option) setSelectedCategoryOption(option.value);
               }}
+              placeholder="카테고리"
             />
             <Dropdown
               options={statusSortOptions}
-              value={selectedStatusOption.value}
+              value={selectedStatusOption ?? ""}
               onSelect={(value) => {
                 const option = statusSortOptions.find(
                   (opt) => opt.value === value,
                 );
-                if (option) setSelectedStatusOption(option);
+                if (option) setSelectedStatusOption(option.value);
               }}
+              placeholder="상태"
             />
           </div>
         </div>
@@ -154,17 +285,17 @@ export default function PlaceListPage() {
         <div className="flex flex-col gap-2 w-[360px]">
           {sortedPlaces.map((place) => (
             <button
-              key={place.id}
+              key={place.placeId}
               type="button"
               className="w-full border-0 bg-transparent p-0 text-left"
-              onClick={() => navigate(`/admin/place/${place.id}`)}
+              onClick={() => navigate(`/admin/place/${place.placeId}`)}
             >
               <PlacePreviewCard
-                name={place.name}
-                station={place.station}
-                line={place.line}
+                name={place.placeName}
+                station={place.stationName}
+                line={place.representativeLine}
                 imageUrl={place.imageUrl}
-                category={CATEGORY_LABELS[place.category]}
+                category={CATEGORY_LABELS[place.categoryCode]}
                 tags={place.tags}
                 description={place.description}
                 status={place.status}
@@ -209,10 +340,10 @@ export default function PlaceListPage() {
             <div className="flex max-h-[250px] w-full flex-col items-start gap-4 overflow-y-auto [scrollbar-width:none]">
               <button
                 type="button"
-                aria-pressed={station === null}
-                className={`w-full border-0 bg-transparent p-0 text-left text-subtitle font-semibold leading-[1.4] tracking-[-0.4px] ${station === null ? "text-gray-100" : "text-gray-60"}`}
+                aria-pressed={selectedStation === null}
+                className={`w-full border-0 bg-transparent p-0 text-left text-subtitle font-semibold leading-[1.4] tracking-[-0.4px] ${selectedStation === null ? "text-gray-100" : "text-gray-60"}`}
                 onClick={() => {
-                  setStation(null);
+                  setSelectedStation(null);
                   setIsStationMenuOpen(false);
                 }}
               >
@@ -221,10 +352,10 @@ export default function PlaceListPage() {
               {(stationsByLine[selectedLine] ?? []).map((stationName) => (
                 <button
                   type="button"
-                  aria-pressed={station === stationName}
-                  className={`w-full border-0 bg-transparent p-0 text-left text-subtitle font-semibold leading-[1.4] tracking-[-0.4px] ${station === stationName ? "text-gray-100" : "text-gray-60"}`}
+                  aria-pressed={selectedStation === stationName}
+                  className={`w-full border-0 bg-transparent p-0 text-left text-subtitle font-semibold leading-[1.4] tracking-[-0.4px] ${selectedStation === stationName ? "text-gray-100" : "text-gray-60"}`}
                   onClick={() => {
-                    setStation(stationName);
+                    setSelectedStation(stationName);
                     setIsStationMenuOpen(false);
                   }}
                   key={stationName}
@@ -236,6 +367,7 @@ export default function PlaceListPage() {
           </section>
         </div>
       )}
+      <div ref={ref} className="h-1 w-full"></div>
     </main>
   );
 }

@@ -1,24 +1,46 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import BackIcon from "@/assets/back.svg?react";
-import { mockPlaces } from "./data/mockPlaces";
 import PlaceDetailContent from "./components/PlaceDetailContent";
 import StatusChip from "./components/StatusChip";
 import CTAButton from "@/components/CTAButton";
-import { useState } from "react";
 import ConfirmModal from "@/components/ConfirmModal";
+import {
+  getPlaceDetail,
+  patchPlaceStatus,
+  type placeDetail,
+} from "@/api/admin";
+import BaseLoading from "@/components/BaseLoading";
 
 // 휴지통으로부터 진입
 
 export default function TrashDetailPage() {
   const navigate = useNavigate();
   const { placeId } = useParams();
-  const place = mockPlaces.find((p) => p.id === placeId);
-  const isRejected = place?.status === "rejected";
+  const [place, setPlace] = useState<placeDetail>();
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const isRejected = place?.status === "REJECTED";
+
+  useEffect(() => {
+    const fetchPlaceDetail = async () => {
+      try {
+        const data = await getPlaceDetail(Number(placeId));
+        setPlace(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPlaceDetail();
+  }, [placeId]);
 
   const handleBackClick = () => {
     navigate(-1);
   };
+
+  if (isLoading) return <BaseLoading />;
 
   if (!place) {
     return (
@@ -28,6 +50,12 @@ export default function TrashDetailPage() {
     );
   }
 
+  const handlePending = async () => {
+    // 복구하기 --> PENDING
+    await patchPlaceStatus(Number(placeId), "PENDING");
+    navigate(-1);
+  };
+
   return (
     <main className="flex flex-col h-dvh  bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* TODO : onConfirm 추후 수정 */}
@@ -35,7 +63,10 @@ export default function TrashDetailPage() {
         <ConfirmModal
           message="해당 장소 데이터를 복구하시겠습니까?"
           onClose={() => setIsModalOpen(false)}
-          onConfirm={() => setIsModalOpen(false)}
+          onConfirm={() => {
+            setIsModalOpen(false);
+            handlePending();
+          }}
         />
       )}
 
@@ -61,7 +92,7 @@ export default function TrashDetailPage() {
                 {isRejected ? "반려 사유" : "삭제 사유"}
               </span>
               <p className="text-body-02 leading-[1.4] tracking-[-0.3px] text-gray-60">
-                {place.reason}
+                {isRejected ? place.rejectReason : place.deleteReason}
               </p>
             </div>
           </div>

@@ -2,7 +2,7 @@ import { fetchWithRequiredAuth, getAccessToken } from "@/api/auth";
 
 import { API_BASE_URL } from "@/api/config";
 
-export type ImageFolder = "JOURNAL" | "PROFILE";
+export type ImageFolder = "JOURNAL" | "PROFILE" | "STATIC_PLACE";
 
 export interface PresignedUrlItem {
   presignedUrl: string;
@@ -13,12 +13,14 @@ export interface PresignedUrlItem {
 export interface GetPresignedUrlRequest {
   folder: ImageFolder;
   journalId?: number;
+  kakaoPlaceId?: string;
   fileName: string;
 }
 
 export interface GetPresignedUrlsBatchRequest {
   folder: ImageFolder;
   journalId?: number;
+  kakaoPlaceId?: string;
   fileNames: string[];
 }
 
@@ -39,17 +41,22 @@ export async function getPresignedUrl(
     throw new Error("로그인 토큰이 없습니다.");
   }
 
-  const response = await fetchWithRequiredAuth(`${API_BASE_URL}/api/v1/images/presigned-url`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  const response = await fetchWithRequiredAuth(
+    `${API_BASE_URL}/api/v1/images/presigned-url`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
     },
-    body: JSON.stringify(body),
-  });
+  );
 
   if (!response.ok) {
     const errorJson = await response.json().catch(() => null);
-    throw new Error(errorJson?.message ?? "이미지 업로드 URL 발급에 실패했습니다.");
+    throw new Error(
+      errorJson?.message ?? "이미지 업로드 URL 발급에 실패했습니다.",
+    );
   }
 
   const json: ApiResponse<PresignedUrlItem> = await response.json();
@@ -77,7 +84,9 @@ export async function getPresignedUrlsBatch(
 
   if (!response.ok) {
     const errorJson = await response.json().catch(() => null);
-    throw new Error(errorJson?.message ?? "다중 이미지 업로드 URL 발급에 실패했습니다.");
+    throw new Error(
+      errorJson?.message ?? "다중 이미지 업로드 URL 발급에 실패했습니다.",
+    );
   }
 
   const json: ApiResponse<PresignedUrlItem[]> = await response.json();

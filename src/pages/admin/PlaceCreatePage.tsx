@@ -8,22 +8,19 @@ import CTAButton from "@/components/CTAButton";
 import { useNavigate } from "react-router-dom";
 import Search from "@/assets/admin/search.svg?react";
 import Close from "@/assets/close.svg?react";
-import { useKakaoLoader } from "react-kakao-maps-sdk";
-
-interface KakaoPlaceResult {
-  id: string;
-  place_name: string; // 장소 이름
-  address_name: string; // 지번 주소
-  road_address_name: string; // 도로명 주소
-  x: string;
-  y: string;
-}
-
-// 서울 전체를 감싸는 사각형 범위 (minLng,minLat,maxLng,maxLat)
-const SEOUL_RECT = "126.7341,37.4283,127.2698,37.7015";
+import { createPlace, getKakaoSearch, type KakaoPlace } from "@/api/admin";
+import { searchStations } from "@/api/stations";
+import { showToast } from "@/pages/course/components/ShowToast";
 
 const CATEGORIES = ["문화공간", "식당", "카페", "산책포인트"] as const;
 type Category = (typeof CATEGORIES)[number];
+
+const CATEGORY_CODES: Record<Category, string> = {
+  문화공간: "CULTURE",
+  식당: "FOOD",
+  카페: "CAFE",
+  산책포인트: "WALK",
+};
 
 type Option = { label: string; value: string };
 
@@ -61,61 +58,102 @@ export default function PlaceCreatePage() {
   const navigate = useNavigate();
   const [selectedLine, setSelectedLine] = useState<Option | null>(null);
   const [selectedStation, setSelectedStation] = useState<Option | null>(null);
+  const [stationLookup, setStationLookup] = useState<{
+    stationName: string;
+    stationId: number | null;
+  } | null>(null);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<KakaoPlaceResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [selectedPlace, setSelectedPlace] = useState<KakaoPlaceResult | null>(
-    null,
-  );
-  const [loading, error] = useKakaoLoader({
-    appkey: import.meta.env.VITE_KAKAO_API,
-    libraries: ["services"],
-  });
+  const [searchResult, setSearchResult] = useState<{
+    keyword: string;
+    stationId: number | null;
+    places: KakaoPlace[];
+  } | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<KakaoPlace | null>(null);
 
+  // 선택한 역 이름 --> stationId 변환
   useEffect(() => {
-    if (loading || error) return;
-
-    const keyword = query.trim();
-    if (!keyword) {
-      setResults([]);
-      setIsSearching(false);
-      return;
-    }
+    if (!selectedStation) return;
 
     let isCancelled = false;
-    setIsSearching(true);
 
-    const timeoutId = window.setTimeout(() => {
-      const ps = new window.kakao.maps.services.Places();
+    searchStations(selectedStation.value)
+      .then((stations) => {
+        if (isCancelled) return;
+        const matched = stations.find(
+          (station) => station.name === selectedStation.value,
+        );
+        setStationLookup({
+          stationName: selectedStation.value,
+          stationId: matched?.id ?? null,
+        });
+      })
+      .catch((e) => {
+        if (isCancelled) return;
+        console.error(e);
+        setStationLookup({
+          stationName: selectedStation.value,
+          stationId: null,
+        });
+      });
 
-      ps.keywordSearch(
-        keyword,
-        (data: unknown, status: string) => {
-          if (isCancelled) return;
-          if (status === window.kakao.maps.services.Status.OK) {
-            setResults(data as unknown as KakaoPlaceResult[]);
-          } else {
-            setResults([]);
-          }
-          setIsSearching(false);
-        },
-        { rect: SEOUL_RECT },
-      );
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedStation]);
+
+  const selectedStationId =
+    selectedStation && stationLookup?.stationName === selectedStation.value
+      ? stationLookup.stationId
+      : null;
+
+  useEffect(() => {
+    const keyword = query.trim();
+    if (!keyword || selectedPlace) return;
+
+    let isCancelled = false;
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const data = await getKakaoSearch(
+          selectedStationId ?? undefined,
+          keyword,
+        );
+        if (isCancelled) return;
+        setSearchResult({
+          keyword,
+          stationId: selectedStationId,
+          places: data.places,
+        });
+      } catch (e) {
+        if (isCancelled) return;
+        console.error(e);
+        setSearchResult({ keyword, stationId: selectedStationId, places: [] });
+      }
     }, 300);
 
     return () => {
       isCancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [query, loading, error]);
+  }, [query, selectedStationId, selectedPlace]);
 
-  const handleSelectPlace = (place: KakaoPlaceResult) => {
+  const trimmedQuery = query.trim();
+  const hasFreshResult =
+    trimmedQuery !== "" &&
+    !selectedPlace &&
+    searchResult !== null &&
+    searchResult.keyword === trimmedQuery &&
+    searchResult.stationId === selectedStationId;
+  const results = hasFreshResult ? searchResult.places : [];
+  const isSearching = trimmedQuery !== "" && !selectedPlace && !hasFreshResult;
+
+  const handleSelectPlace = (place: KakaoPlace) => {
     setSelectedPlace(place);
-    setQuery(place.place_name);
-    setResults([]);
+    setQuery(place.placeName);
+    setImages([]);
   };
+
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isFocus, setIsFocus] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>();
 
   const stationOptions: Option[] = selectedLine
@@ -132,6 +170,41 @@ export default function PlaceCreatePage() {
 
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<string[]>([]);
+
+  const canSubmit =
+    selectedPlace !== null &&
+    selectedStationId !== null &&
+    selectedCategory !== undefined &&
+    selectedHastagOption1 !== null &&
+    selectedHastagOption2 !== null;
+
+  const handleSave = async () => {
+    if (!canSubmit) {
+      return;
+    }
+
+    try {
+      await createPlace({
+        stationId: selectedStationId,
+        categoryCode: CATEGORY_CODES[selectedCategory],
+        description,
+        tagNames: [selectedHastagOption1.value, selectedHastagOption2.value],
+        imageUrls: images,
+        kakaoPlaceId: selectedPlace.kakaoPlaceId,
+        placeName: selectedPlace.placeName,
+        address: selectedPlace.address,
+        contactNumber: selectedPlace.contactNumber,
+        xCoordinate: selectedPlace.xCoordinate,
+        yCoordinate: selectedPlace.yCoordinate,
+      });
+      navigate("/admin/place/");
+    } catch (e) {
+      console.error(e);
+      showToast({
+        message: e instanceof Error ? e.message : "장소 등록에 실패했습니다.",
+      });
+    }
+  };
 
   return (
     <main className="flex flex-col h-dvh bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -180,10 +253,10 @@ export default function PlaceCreatePage() {
               {selectedPlace ? (
                 <div className="flex flex-col bg-white w-full rounded-lg p-2.5">
                   <span className="text-subtitle font-semibold leading-[1.4] tracking-[-0.4px] text-gray-100">
-                    {selectedPlace.place_name}
+                    {selectedPlace.placeName}
                   </span>
                   <p className="text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-70">
-                    {selectedPlace.address_name}
+                    {selectedPlace.address}
                   </p>
                 </div>
               ) : (
@@ -196,9 +269,7 @@ export default function PlaceCreatePage() {
                     setQuery(e.target.value);
                     setSelectedPlace(null);
                   }}
-                  className="bg-white rounded-lg p-2.5 pr-10 w-full focus:outline-primary-50 caret-primary-50 text-subtitle"
-                  onFocus={() => setIsFocus(true)}
-                  onBlur={() => setIsFocus(false)}
+                  className="bg-white rounded-lg px-4 py-3 pr-10 w-full focus:outline-primary-50 caret-primary-50 text-subtitle"
                 />
               )}
               <button
@@ -207,11 +278,11 @@ export default function PlaceCreatePage() {
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   setQuery("");
-                  setResults([]);
                   setSelectedPlace(null);
+                  setImages([]);
                 }}
               >
-                {isFocus ? (
+                {query ? (
                   <Close className="size-5" />
                 ) : (
                   <Search className="size-5" />
@@ -222,7 +293,7 @@ export default function PlaceCreatePage() {
             {results.length > 0 && !selectedPlace && (
               <ul className="absolute top-full left-0 z-10 mt-2 flex w-full flex-col rounded-lg bg-white shadow-[0_0_28px_0_rgba(118,118,118,0.25)]">
                 {results.map((place, index) => (
-                  <li key={place.id}>
+                  <li key={place.kakaoPlaceId}>
                     <button
                       type="button"
                       onClick={() => handleSelectPlace(place)}
@@ -231,10 +302,10 @@ export default function PlaceCreatePage() {
                       }`}
                     >
                       <span className="text-subtitle font-semibold leading-[1.4] tracking-[-0.4px] text-gray-100">
-                        {place.place_name}
+                        {place.placeName}
                       </span>
                       <p className="text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-70">
-                        {place.address_name || place.road_address_name}
+                        {place.address}
                       </p>
                     </button>
                   </li>
@@ -242,12 +313,14 @@ export default function PlaceCreatePage() {
               </ul>
             )}
 
-            {query && !isSearching && results.length < 1 && (
-              <p className="absolute px-4 py-3 top-full left-0 z-10 mt-2 flex w-full rounded-lg bg-white shadow-[0_0_28px_0_rgba(118,118,118,0.25)] text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-100">
-                검색 결과가 없습니다.
-                <br />
-                카카오맵을 기준으로 장소명을 다시 확인해주세요.
-              </p>
+            {query && !selectedPlace && !isSearching && results.length < 1 && (
+              <div className="absolute px-4 py-3 top-full left-0 z-10 mt-2 flex w-full rounded-lg bg-white shadow-[0_0_28px_0_rgba(118,118,118,0.25)]">
+                <p className="text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-100">
+                  검색 결과가 없습니다.
+                  <br />
+                  카카오맵을 기준으로 장소명을 다시 확인해주세요.
+                </p>
+              </div>
             )}
           </section>
 
@@ -330,12 +403,16 @@ export default function PlaceCreatePage() {
               장소 사진 추가
             </span>
             <div className="grid grid-cols-3 gap-4">
-              <PlacePhotoUploader photos={images} onChange={setImages} />
+              <PlacePhotoUploader
+                photos={images}
+                onChange={setImages}
+                kakaoPlaceId={selectedPlace?.kakaoPlaceId ?? ""}
+              />
             </div>
           </section>
 
           <section className="fixed inset-x-0 bottom-[calc(var(--safe-bottom)+10px)] z-10 flex items-center justify-center">
-            <CTAButton onClick={() => navigate("/admin/place/")}>
+            <CTAButton disabled={!canSubmit} onClick={handleSave}>
               작성 완료
             </CTAButton>
           </section>
