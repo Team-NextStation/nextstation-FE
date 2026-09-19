@@ -150,6 +150,7 @@ export default function PlaceCreatePage() {
   const handleSelectPlace = (place: KakaoPlace) => {
     setSelectedPlace(place);
     setQuery(place.placeName);
+    setImages([]);
   };
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -278,6 +279,7 @@ export default function PlaceCreatePage() {
                 onClick={() => {
                   setQuery("");
                   setSelectedPlace(null);
+                  setImages([]);
                 }}
               >
                 {query ? (
