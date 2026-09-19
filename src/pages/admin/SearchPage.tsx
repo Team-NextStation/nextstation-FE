@@ -114,12 +114,20 @@ export default function SearchPage() {
               key={place.placeId}
               type="button"
               className="w-full border-0 bg-transparent p-0 text-left"
-              onClick={() => navigate(`/admin/place/${place.placeId}`)}
+              onClick={() => {
+                const isTrashed =
+                  place.status === "REJECTED" || place.status === "DELETED";
+                navigate(
+                  isTrashed
+                    ? `/admin/trash/${place.placeId}`
+                    : `/admin/place/${place.placeId}`,
+                );
+              }}
             >
               <PlacePreviewCard
                 key={place.placeId}
                 name={place.placeName}
-                station={place.representativeLine.name}
+                station={place.stationName}
                 line={place.representativeLine}
                 imageUrl={place.imageUrl}
                 category={CATEGORY_STYLE_LABELS[place.categoryCode]}
