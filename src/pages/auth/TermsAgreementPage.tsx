@@ -5,6 +5,8 @@ import {
   AuthApiError,
   type AuthTerm,
   type AuthTermType,
+  appleSignup,
+  getAppleSignupToken,
   getTerms,
   getKakaoSignupToken,
   kakaoSignup,
@@ -196,6 +198,35 @@ export default function TermsAgreementPage() {
           error instanceof AuthApiError
             ? error.message
             : '카카오 회원가입 요청에 실패했습니다.',
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    if (searchParams.get('provider') === 'apple') {
+      const appleSignupToken = getAppleSignupToken();
+
+      if (!appleSignupToken) {
+        setSubmitError('Apple 회원가입 정보가 만료되었습니다. 다시 로그인해주세요.');
+        return;
+      }
+
+      try {
+        setIsSubmitting(true);
+        setSubmitError('');
+        const { signupToken } = await appleSignup(
+          appleSignupToken,
+          agreedTermsIds,
+        );
+        saveSignupToken(signupToken);
+        navigate('/auth/profile');
+      } catch (error) {
+        setSubmitError(
+          error instanceof AuthApiError
+            ? error.message
+            : 'Apple 회원가입 요청에 실패했습니다.',
         );
       } finally {
         setIsSubmitting(false);
