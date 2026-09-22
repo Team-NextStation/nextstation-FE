@@ -37,7 +37,8 @@ public final class AppleSignInPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     private func resolveSavedCall(_ result: PluginCallResultData) {
-        guard let call = bridge?.savedCall(withID: currentCallId) else {
+        guard let callId = currentCallId,
+              let call = bridge?.savedCall(withID: callId) else {
             return
         }
 
@@ -48,7 +49,8 @@ public final class AppleSignInPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     private func rejectSavedCall(_ message: String, code: String) {
-        guard let call = bridge?.savedCall(withID: currentCallId) else {
+        guard let callId = currentCallId,
+              let call = bridge?.savedCall(withID: callId) else {
             return
         }
 
