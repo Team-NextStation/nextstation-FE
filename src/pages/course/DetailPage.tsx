@@ -501,7 +501,10 @@ export default function DetailPage() {
                   <HeartIcon className="size-6" aria-hidden="true" />
                 )}
               </button>
-              <button onClick={() => setIsReportModalOpen(true)}>
+              <button
+                onClick={() => setIsReportModalOpen(true)}
+                className="outline-none"
+              >
                 <MoreIcon className="size-6" />
               </button>
             </div>
