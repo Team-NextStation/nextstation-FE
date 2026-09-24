@@ -13,9 +13,11 @@ import {
   type PublicMemberProfile,
 } from "@/api/member";
 import type { Stamp } from "@/api/stamp";
-import Header from "@/components/Header";
+import BackIcon from "@/assets/back.svg?react";
+import MoreIcon from "@/assets/like/more.svg?react";
 import JournalPreviewCard from "./components/JournalPreviewCard";
 import StampListView from "./components/StampListView";
+import ReportModal from "@/components/ReportModal";
 
 export default function UserPage() {
   const navigate = useNavigate();
@@ -33,6 +35,7 @@ export default function UserPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const handleTabChange = (tab: "stamp" | "journal") => {
     const nextSearchParams = new URLSearchParams(searchParams);
@@ -124,9 +127,36 @@ export default function UserPage() {
   if (errorMessage) return <p>{errorMessage}</p>;
   if (!profile) return null;
 
+  // 뒤로 가기 버튼 클릭 시 실행
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <main className="flex h-dvh flex-col gap-2.5 overflow-y-auto bg-gray-10 pt-[calc(var(--safe-top)+12px)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-      <Header showBack />
+      {isReportModalOpen && (
+        <ReportModal
+          mode="profile"
+          reportTarget={profile.nickname}
+          onClose={() => setIsReportModalOpen(false)}
+        />
+      )}
+
+      <header className="flex shrink-0 h-[50px] items-center px-[15px]">
+        <div className="flex w-full items-center justify-between">
+          <button
+            type="button"
+            onClick={handleBack}
+            aria-label="이전"
+            className="grid size-6 place-items-center"
+          >
+            <BackIcon className="size-6" aria-hidden="true" />
+          </button>
+          <button onClick={() => setIsReportModalOpen(true)}>
+            <MoreIcon className="size-6" />
+          </button>
+        </div>
+      </header>
 
       <section className="flex justify-center">
         <div className="flex flex-col gap-4">
