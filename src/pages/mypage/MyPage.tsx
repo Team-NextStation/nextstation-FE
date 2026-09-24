@@ -86,6 +86,10 @@ export default function MyPage() {
       items: [
         { label: "계정 정보" },
         {
+          label: "차단한 사용자",
+          onClick: () => navigate("/mypage/blocked-users"),
+        },
+        {
           label: "로그아웃",
           onClick: () => setIsLogoutModalOpen(true),
         },
