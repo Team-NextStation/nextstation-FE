@@ -7,6 +7,7 @@ const ACCESS_TOKEN_STORAGE_KEY = "auth.accessToken";
 const KAKAO_SIGNUP_TOKEN_STORAGE_KEY = "auth.kakaoSignupToken";
 const KAKAO_PROFILE_STORAGE_KEY = "auth.kakaoProfile";
 const KAKAO_OAUTH_STATE_STORAGE_KEY = "auth.kakaoOAuthState";
+const APPLE_SIGNUP_TOKEN_STORAGE_KEY = "auth.appleSignupToken";
 const ACCESS_TOKEN_CHANGED_EVENT = "auth:access-token-changed";
 const ROLE_STORAGE_KEY = "auth.role";
 
@@ -122,6 +123,7 @@ export function clearSignupFlow() {
   sessionStorage.removeItem(SIGNUP_TOKEN_STORAGE_KEY);
   sessionStorage.removeItem(KAKAO_SIGNUP_TOKEN_STORAGE_KEY);
   sessionStorage.removeItem(KAKAO_PROFILE_STORAGE_KEY);
+  sessionStorage.removeItem(APPLE_SIGNUP_TOKEN_STORAGE_KEY);
 }
 
 export function saveAccessToken(token: string) {
@@ -515,6 +517,37 @@ export function kakaoLogin(
   });
 }
 
+export function createAppleNonce() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
+interface AppleLoginResponse {
+  resultType: "LOGIN_SUCCESS" | "PENDING_PROFILE" | "NEW_MEMBER";
+  memberId?: number;
+  accessToken?: string;
+  signupToken?: string;
+  appleSignupToken?: string;
+  role?: "USER" | "ADMIN";
+}
+
+export function appleLogin(identityToken: string, nonce: string) {
+  return authRequest<AppleLoginResponse>("/api/v1/auth/apple/login", {
+    method: "POST",
+    body: JSON.stringify({ identityToken, nonce }),
+  });
+}
+
+export function saveAppleSignupToken(token: string) {
+  sessionStorage.setItem(APPLE_SIGNUP_TOKEN_STORAGE_KEY, token);
+}
+
+export function getAppleSignupToken() {
+  return sessionStorage.getItem(APPLE_SIGNUP_TOKEN_STORAGE_KEY);
+}
+
 export function sendPasswordResetVerification(email: string) {
   return authRequest<string>("/api/v1/auth/password-reset/email/verification", {
     method: "POST",
@@ -556,6 +589,16 @@ export function kakaoSignup(
   return authRequest<SignupResponse>("/api/v1/auth/kakao/signup", {
     method: "POST",
     body: JSON.stringify({ kakaoSignupToken, agreedTermsIds }),
+  });
+}
+
+export function appleSignup(
+  appleSignupToken: string,
+  agreedTermsIds: number[],
+) {
+  return authRequest<SignupResponse>("/api/v1/auth/apple/signup", {
+    method: "POST",
+    body: JSON.stringify({ appleSignupToken, agreedTermsIds }),
   });
 }
 
