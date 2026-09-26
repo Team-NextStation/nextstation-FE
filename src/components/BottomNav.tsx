@@ -36,16 +36,8 @@ export default function BottomNav({ mode, activeTab = 'save' }: BottomNavProps) 
           </button>
           <button
             onClick={() => {
-              if (isChecking) {
-                return;
-              }
-
-              if (!isLoggedIn) {
-                setIsLoginModalOpen(true);
-                return;
-              }
-
-              navigate("/course");
+              if (isChecking) return;
+              navigate("/explore");
             }}
             className={`relative flex flex-col items-center gap-1 rounded-[38px] px-10 py-2 text-body-02 font-semibold leading-none whitespace-nowrap tracking-[-0.025em] text-center outline-none ${inactiveTabClassName}`}
           >
@@ -69,16 +61,14 @@ export default function BottomNav({ mode, activeTab = 'save' }: BottomNavProps) 
             <div className="pointer-events-none absolute inset-x-3 top-1 h-[16px] rounded-full bg-white/25 blur-md" />
             <button
               onClick={() => {
-                if (isChecking) {
-                  return;
-                }
+                if (isChecking) return;
 
                 if (!isLoggedIn) {
                   setIsLoginModalOpen(true);
                   return;
                 }
 
-                navigate(`/course`);
+                navigate("/course");
               }}
               className={`relative flex flex-col items-center rounded-[38px] px-6 py-2 gap-1 text-body-02 font-semibold leading-none whitespace-nowrap tracking-[-0.025em] text-center outline-none
                 ${activeTab === 'save'
