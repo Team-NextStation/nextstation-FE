@@ -21,12 +21,12 @@ import {
   type Course,
   type Place,
 } from "@/api/place";
-import { getAccessToken } from "@/api/auth";
+import { useAuth } from "@/contexts/useAuth";
 
 export default function DetailPage() {
   const { placeId } = useParams();
   const navigate = useNavigate();
-  const isLoggedIn = Boolean(getAccessToken());
+  const { isLoggedIn } = useAuth();
   const [place, setPlace] = useState<Place | null>(null); // place
   const [isPlaceLoading, setIsPlaceLoading] = useState(true);
   const [placeError, setPlaceError] = useState<string | null>(null);

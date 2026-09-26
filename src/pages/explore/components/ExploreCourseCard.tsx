@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   likeExploreCourse,
   unlikeExploreCourse,
@@ -9,6 +9,8 @@ import CardBG from "@/assets/card-default.svg?react";
 import HeartFilled from "@/assets/explore/heart-filled.svg?react";
 import LineBadge, { type SubwayLine } from "@/components/LineBadge";
 import CourseRankBadge from "./CourseRankBadge";
+import LeadToLoginModal from "@/components/LeadToLoginModal";
+import { getAccessToken, subscribeToAccessTokenChange } from "@/api/auth";
 
 interface ExploreCourseCardProps {
   course: ExploreCourse;
@@ -30,8 +32,9 @@ export default function ExploreCourseCard({
   rank,
 }: ExploreCourseCardProps) {
   const [liked, setLiked] = useState(course.isLiked);
+  const [originalLiked, setOriginalLiked] = useState(course.isLiked);
   const [isLikePending, setIsLikePending] = useState(false);
-  const originalLiked = course.isLiked;
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const likeCount =
     course.likeCount + (liked === originalLiked ? 0 : liked ? 1 : -1);
   const hasBackgroundImage = Boolean(course.imageUrl);
@@ -41,8 +44,21 @@ export default function ExploreCourseCard({
   const textColorClass = hasBackgroundImage ? "text-white" : "text-gray-100";
   const subwayLine = course.line ? getSubwayLine(course.line.code) : null;
 
+  useEffect(() => {
+    return subscribeToAccessTokenChange((token) => {
+      if (!token) {
+        setLiked(false);
+        setOriginalLiked(false);
+      }
+    });
+  }, []);
+
   const handleLike = async () => {
     if (isLikePending) return;
+    if (!getAccessToken()) {
+      setIsLoginModalOpen(true);
+      return;
+    }
 
     const nextLiked = !liked;
     setLiked(nextLiked);
@@ -61,7 +77,8 @@ export default function ExploreCourseCard({
   };
 
   return (
-    <article
+    <>
+      <article
       className="relative flex h-[200px] w-36 shrink-0 flex-col justify-between overflow-hidden rounded-lg bg-secondary-20 pb-4 pl-4 pr-2 pt-4 shadow-[0_0_20px_rgb(118_118_118/20%)]"
       style={
         backgroundImage
@@ -124,6 +141,13 @@ export default function ExploreCourseCard({
           {likeCount}
         </button>
       </div>
-    </article>
+      </article>
+      {isLoginModalOpen && (
+        <LeadToLoginModal
+          message={"좋아요를 누르려면\n로그인이 필요해요!"}
+          onClose={() => setIsLoginModalOpen(false)}
+        />
+      )}
+    </>
   );
 }
