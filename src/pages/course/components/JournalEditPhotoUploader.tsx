@@ -7,6 +7,7 @@ import {
   getPresignedUrlsBatch,
   uploadFileToPresignedUrl,
 } from "@/api/image";
+import { compressImage } from "@/utils/imageCompression";
 import { showToast } from "./ShowToast";
 import type { EditPhoto } from "./JournalEditForm";
 
@@ -40,14 +41,15 @@ export default function JournalEditPhotoUploader({
     setIsUploading(true);
 
     try {
+      const compressedFile = await compressImage(file);
       const [presignedItem] = await getPresignedUrlsBatch({
         folder: "JOURNAL",
-        fileNames: [createUploadFileName(file)],
+        fileNames: [createUploadFileName(compressedFile)],
       });
 
       await uploadFileToPresignedUrl(
         presignedItem.presignedUrl,
-        file,
+        compressedFile,
         presignedItem.contentType,
       );
 

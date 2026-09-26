@@ -596,6 +596,12 @@ export default function DetailPage() {
               <div className="relative shrink-0 w-full h-full">
                 <img
                   src={journalImagesSrcs[0]}
+                  alt={`${course.journalTitle} 여행 사진 1`}
+                  width={330}
+                  height={260}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                   className="rounded-ml w-full h-full object-cover"
                 />
               </div>
@@ -605,6 +611,12 @@ export default function DetailPage() {
                   <img
                     src={image}
                     key={index}
+                    alt={`${course.journalTitle} 여행 사진 ${index + 1}`}
+                    width={165}
+                    height={260}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={index === 0 ? "high" : "low"}
+                    decoding="async"
                     className="flex-1 min-w-0 rounded-ml h-full object-cover"
                   />
                 ))}
@@ -613,15 +625,33 @@ export default function DetailPage() {
               <div className="flex relative gap-2 w-full h-full">
                 <img
                   src={journalImagesSrcs[0]}
+                  alt={`${course.journalTitle} 여행 사진 1`}
+                  width={165}
+                  height={260}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                   className="rounded-ml min-w-0 flex-1 h-full object-cover"
                 />
                 <div className="flex flex-col gap-2 min-w-0 flex-1 h-full">
                   <img
                     src={journalImagesSrcs[1]}
+                    alt={`${course.journalTitle} 여행 사진 2`}
+                    width={165}
+                    height={126}
+                    loading="lazy"
+                    fetchPriority="low"
+                    decoding="async"
                     className="rounded-ml w-full min-h-0 flex-1 object-cover"
                   />
                   <img
                     src={journalImagesSrcs[2]}
+                    alt={`${course.journalTitle} 여행 사진 3`}
+                    width={165}
+                    height={126}
+                    loading="lazy"
+                    fetchPriority="low"
+                    decoding="async"
                     className="rounded-ml w-full min-h-0 flex-1 object-cover"
                   />
                 </div>

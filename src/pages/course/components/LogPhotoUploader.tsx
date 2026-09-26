@@ -8,6 +8,7 @@ import {
   getPresignedUrlsBatch,
   uploadFileToPresignedUrl,
 } from "@/api/image";
+import { compressImage } from "@/utils/imageCompression";
 import { showToast } from "./ShowToast";
 
 const MAX_PHOTO_COUNT = 3;
@@ -44,7 +45,10 @@ export default function LogPhotoUploader({
     setIsUploading(true);
 
     try {
-      const fileNames = uploadTargets.map((file) => createUploadFileName(file));
+      const compressedFiles = await Promise.all(
+        uploadTargets.map((file) => compressImage(file)),
+      );
+      const fileNames = compressedFiles.map((file) => createUploadFileName(file));
       const presignedItems = await getPresignedUrlsBatch({
         folder: "JOURNAL",
         fileNames,
@@ -54,7 +58,7 @@ export default function LogPhotoUploader({
         presignedItems.map((item, index) =>
           uploadFileToPresignedUrl(
             item.presignedUrl,
-            uploadTargets[index],
+            compressedFiles[index],
             item.contentType,
           ),
         ),

@@ -22,6 +22,10 @@ export default function CourseDetailPlace({
           className="size-[100px] shrink-0 bg-secondary-20 object-cover"
           src={place.imageUrl!}
           alt=""
+          width={100}
+          height={100}
+          loading="lazy"
+          decoding="async"
         />
       )}
 
