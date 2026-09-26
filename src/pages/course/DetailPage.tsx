@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import BackIcon from "@/assets/back.svg?react";
 import HeartIcon from "@/assets/heart.svg?react";
 import HeartFilledIcon from "@/assets/explore/heart-filled.svg?react";
-import More from "@/assets/like/more.svg?react";
+import MoreIcon from "@/assets/like/more.svg?react";
 import ProfileDefault from "@/assets/profile-default.svg?react";
 import StarOne from "@/assets/course-detail/star-1.svg?react";
 import StarTwo from "@/assets/course-detail/star-2.svg?react";
@@ -31,6 +31,7 @@ import JournalEditForm, {
   type EditPhoto,
   type JournalEditPlaceValue,
 } from "./components/JournalEditForm";
+import ReportModal from "@/components/ReportModal";
 
 const isSubwayLine = (value: number): value is SubwayLine =>
   Number.isInteger(value) && value >= 1 && value <= 9;
@@ -134,6 +135,7 @@ export default function DetailPage() {
   const [editPlaces, setEditPlaces] = useState<JournalEditPlaceValue[]>([]);
   const [isSavingJournal, setIsSavingJournal] = useState(false);
   const [isLeaveConfirmModalOpen, setIsLeaveConfirmModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   useEffect(() => {
     if (!hasValidJournalId) return;
@@ -465,6 +467,14 @@ export default function DetailPage() {
         />
       )}
 
+      {isReportModalOpen && (
+        <ReportModal
+          mode="content"
+          reportTarget={course.writerName}
+          onClose={() => setIsReportModalOpen(false)}
+        />
+      )}
+
       <header className="flex shrink-0 h-[50px] items-center px-[15px]">
         <div className="flex w-full items-center justify-between">
           <button
@@ -476,20 +486,28 @@ export default function DetailPage() {
             <BackIcon className="size-6" aria-hidden="true" />
           </button>
           {!course.isMine ? (
-            <button
-              type="button"
-              onClick={handleToggleSave}
-              aria-label={saved ? "좋아요 취소" : "좋아요"}
-              aria-pressed={saved}
-              disabled={isSaving}
-              className="grid size-6 place-items-center disabled:opacity-50"
-            >
-              {saved ? (
-                <HeartFilledIcon className="size-6" aria-hidden="true" />
-              ) : (
-                <HeartIcon className="size-6" aria-hidden="true" />
-              )}
-            </button>
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={handleToggleSave}
+                aria-label={saved ? "좋아요 취소" : "좋아요"}
+                aria-pressed={saved}
+                disabled={isSaving}
+                className="grid size-6 place-items-center disabled:opacity-50"
+              >
+                {saved ? (
+                  <HeartFilledIcon className="size-6" aria-hidden="true" />
+                ) : (
+                  <HeartIcon className="size-6" aria-hidden="true" />
+                )}
+              </button>
+              <button
+                onClick={() => setIsReportModalOpen(true)}
+                className="outline-none"
+              >
+                <MoreIcon className="size-6" />
+              </button>
+            </div>
           ) : isEditMode ? (
             <button
               className="text-subtitle font-semibold leading-[1.4] tracking-[-0.4px] text-gray-90 disabled:opacity-50"
@@ -506,7 +524,7 @@ export default function DetailPage() {
                 aria-label="더보기"
                 className="flex items-center"
               >
-                <More className="size-6" />
+                <MoreIcon className="size-6" />
               </button>
               {isJournalSettingOpen && (
                 <div className="absolute right-0 top-full z-10 mt-2">
