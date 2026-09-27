@@ -1,19 +1,28 @@
-import type { ContentReportReason, ProfileReportReason } from "@/types/report";
+import type {
+  ContentReportReason,
+  ProfileReportReason,
+  ReportTargetType,
+} from "@/types/report";
 import ModalButton from "./ModalButton";
 import SuccessModal from "./SuccessModal";
 import { useState } from "react";
 import ConfirmModal from "./ConfirmModal";
+import { postReport, ReportAlreadyExistsError } from "@/api/report";
+import { showToast } from "@/pages/course/components/ShowToast";
 
 export type ReportMode = "content" | "profile";
 
 interface ReportReasonModalProps {
   mode: ReportMode;
+  targetType: ReportTargetType;
+  targetId: number;
   onClose: () => void;
 }
 
 // reason : 신고 사유 선택 모달 / confirm : 신고 전 확인 모달 / succes : 신고 완료 모달
 type ReportStep = "reason" | "confirm" | "success";
 
+// 여행일지 및 장소 리뷰
 const CONTENT_REPORT_REASONS: { value: ContentReportReason; label: string }[] =
   [
     { value: "ABUSIVE_CONTENT", label: "욕설·비방 등 부적절한 콘텐츠" },
@@ -22,16 +31,19 @@ const CONTENT_REPORT_REASONS: { value: ContentReportReason; label: string }[] =
     { value: "IRRELEVANT", label: "서비스와 관련 없는 콘텐츠" },
   ];
 
+// 프로필
 const PROFILE_REPORT_REASONS: { value: ProfileReportReason; label: string }[] =
   [
-    { value: "ABUSIVE", label: "욕설·비방 괴롭힘" },
-    { value: "SPAM", label: "스팸·광고 활동" },
+    { value: "ABUSIVE_CONTENT", label: "욕설·비방 괴롭힘" },
+    { value: "SPAM_AD", label: "스팸·광고 활동" },
     { value: "IMPERSONATION", label: "사칭·허위 계정" },
     { value: "INAPPROPRIATE_PROFILE", label: "부적절한 프로필" },
   ];
 
 export default function ReportReasonModal({
   mode,
+  targetType,
+  targetId,
   onClose,
 }: ReportReasonModalProps) {
   const isContentMode = mode === "content";
@@ -39,6 +51,29 @@ export default function ReportReasonModal({
     ContentReportReason | ProfileReportReason | null
   >(null);
   const [step, setStep] = useState<ReportStep>("reason");
+
+  const handleReportConfirm = async () => {
+    if (!selectedReason) return;
+
+    try {
+      await postReport({ targetType, targetId, reason: selectedReason });
+      setStep("success");
+    } catch (e) {
+      console.error(e);
+
+      if (e instanceof ReportAlreadyExistsError) {
+        showToast({
+          message: isContentMode
+            ? "이미 신고한 콘텐츠예요."
+            : "이미 신고한 사용자예요.",
+        });
+        onClose();
+        return;
+      }
+
+      showToast({ message: "신고에 실패했어요." });
+    }
+  };
 
   if (step === "success") {
     return (
@@ -61,7 +96,7 @@ export default function ReportReasonModal({
         leftButtonText="취소"
         rightButtonText="신고하기"
         onClose={onClose}
-        onConfirm={() => setStep("success")}
+        onConfirm={handleReportConfirm}
       />
     );
   }
@@ -78,7 +113,7 @@ export default function ReportReasonModal({
         leftButtonText="취소"
         rightButtonText="신고하기"
         onClose={onClose}
-        onConfirm={() => setStep("success")}
+        onConfirm={handleReportConfirm}
       />
     );
   }
@@ -95,7 +130,7 @@ export default function ReportReasonModal({
         className="flex relative flex-col gap-4 w-[360px] items-center bg-white px-4 pt-8 pb-6 rounded-lg"
       >
         <div className="flex flex-col items-center gap-2">
-          <span className="text-title-02 font-semibold leading-1.4 trakcing-[-0.45px] text-gray-100">
+          <span className="text-title-02 font-semibold leading-1.4 tracking-[-0.45px] text-gray-100">
             {isContentMode ? "콘텐츠 신고" : "사용자 신고"}
           </span>
           <p className="text-body-01 leading-1.4 trakcing-[-0.35px] text-gray-50">

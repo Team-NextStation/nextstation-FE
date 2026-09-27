@@ -6,6 +6,7 @@ import BaseLoading from "@/components/BaseLoading";
 import PublicJournalEmpty from "@/assets/public-journal-empty.svg?react";
 import ProfileDefault from "@/assets/profile-default.svg?react";
 import {
+  getCachedMyProfile,
   getPublicMemberCourses,
   getPublicMemberProfile,
   getPublicMemberStamps,
@@ -18,6 +19,7 @@ import MoreIcon from "@/assets/like/more.svg?react";
 import JournalPreviewCard from "./components/JournalPreviewCard";
 import StampListView from "./components/StampListView";
 import ReportModal from "@/components/ReportModal";
+import WarningIcon from "@/assets/warning-outline.svg?react";
 
 export default function UserPage() {
   const navigate = useNavigate();
@@ -36,6 +38,8 @@ export default function UserPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const isMine = memberId === getCachedMyProfile()?.memberId;
 
   const handleTabChange = (tab: "stamp" | "journal") => {
     const nextSearchParams = new URLSearchParams(searchParams);
@@ -66,6 +70,7 @@ export default function UserPage() {
         if (!isActive) return;
 
         setProfile(profileResponse);
+        setIsBlocked(profileResponse.blocked);
         setStamps(
           stampResponse.flatMap((stamp) => {
             const line = stamp.line;
@@ -134,11 +139,15 @@ export default function UserPage() {
 
   return (
     <main className="flex h-dvh flex-col gap-2.5 overflow-y-auto bg-gray-10 pt-[calc(var(--safe-top)+12px)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-      {isReportModalOpen && (
+      {isReportModalOpen && !isMine && (
         <ReportModal
           mode="profile"
           reportTarget={profile.nickname}
+          targetMemberId={memberId}
+          targetType="PROFILE"
+          targetId={memberId}
           onClose={() => setIsReportModalOpen(false)}
+          onBlock={() => setIsBlocked(true)}
         />
       )}
 
@@ -152,17 +161,19 @@ export default function UserPage() {
           >
             <BackIcon className="size-6" aria-hidden="true" />
           </button>
-          <button
-            onClick={() => setIsReportModalOpen(true)}
-            className="outline-none"
-          >
-            <MoreIcon className="size-6" />
-          </button>
+          {!isMine && (
+            <button
+              onClick={() => setIsReportModalOpen(true)}
+              className="outline-none"
+            >
+              <MoreIcon className="size-6" />
+            </button>
+          )}
         </div>
       </header>
 
       <section className="flex justify-center">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col items-center gap-4">
           {profile.profileImageUrl ? (
             <img
               src={profile.profileImageUrl}
@@ -172,10 +183,18 @@ export default function UserPage() {
           ) : (
             <ProfileDefault className="size-[70px]" aria-hidden="true" />
           )}
-          <div className="flex justify-center gap-[5px]">
-            <span className="text-title-01 font-semibold leading-[1.4] tracking-[-0.5px]">
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-title-01 font-semibold leading-[1.4] tracking-[-0.5px] text-center">
               {profile.nickname}
             </span>
+            {isBlocked && (
+              <div className="flex gap-[5px] items-center">
+                <WarningIcon className="size-4" />
+                <p className="flex text-body-02 leading-1.4 tracking-[-0.3px] text-primary-60">
+                  내가 차단한 사용자예요.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>

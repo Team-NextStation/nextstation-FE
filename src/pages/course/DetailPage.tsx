@@ -471,6 +471,9 @@ export default function DetailPage() {
         <ReportModal
           mode="content"
           reportTarget={course.writerName}
+          targetMemberId={course.writerId}
+          targetType="JOURNAL"
+          targetId={journalId}
           onClose={() => setIsReportModalOpen(false)}
         />
       )}
