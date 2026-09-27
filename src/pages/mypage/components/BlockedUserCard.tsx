@@ -1,8 +1,9 @@
 import CheckIcon from "@/assets/check-gray.svg?react";
+import ProfileDefault from "@/assets/profile-default.svg?react";
 
 interface BlockedUserCardProps {
   name: string;
-  imageUrl: string;
+  imageUrl: string | null;
   isBlocked: boolean;
   onToggle: () => void;
 }
@@ -17,7 +18,15 @@ export default function BlockedUserCard({
     <div className="flex w-[360px] items-center justify-between">
       <div className="flex items-center gap-2">
         <div className="w-10 h-10 rounded-full overflow-hidden">
-          <img src={imageUrl} className="w-full h-full object-cover" />
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <ProfileDefault className="w-full h-full" />
+          )}
         </div>
         <span className="text-title-02 font-semibold leading-1.4 tracking-[-0.45px] text-gray-100">
           {name}
