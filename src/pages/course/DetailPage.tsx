@@ -27,6 +27,8 @@ import {
 } from "@/api/recommendation";
 import JournalSetting from "./components/JournalSetting";
 import ConfirmModal from "@/components/ConfirmModal";
+import LeadToLoginModal from "@/components/LeadToLoginModal";
+import { useAuth } from "@/contexts/useAuth";
 import JournalEditForm, {
   type EditPhoto,
   type JournalEditPlaceValue,
@@ -113,6 +115,7 @@ export default function DetailPage() {
   const { courseId: journalIdParam } = useParams();
   const journalId = Number(journalIdParam);
   const hasValidJournalId = isPositiveId(journalId);
+  const { isLoggedIn } = useAuth();
   const [course, setCourse] = useState<CourseDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -134,6 +137,7 @@ export default function DetailPage() {
   const [editPlaces, setEditPlaces] = useState<JournalEditPlaceValue[]>([]);
   const [isSavingJournal, setIsSavingJournal] = useState(false);
   const [isLeaveConfirmModalOpen, setIsLeaveConfirmModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   useEffect(() => {
     if (!hasValidJournalId) return;
@@ -162,10 +166,14 @@ export default function DetailPage() {
     return () => {
       isActive = false;
     };
-  }, [hasValidJournalId, journalId]);
+  }, [hasValidJournalId, isLoggedIn, journalId]);
 
   const handleToggleSave = async () => {
     if (isSaving || !course) return;
+    if (!isLoggedIn) {
+      setIsLoginModalOpen(true);
+      return;
+    }
 
     const nextSaved = !saved;
     setSaved(nextSaved);
@@ -200,6 +208,10 @@ export default function DetailPage() {
 
   const handleCopyCourse = async () => {
     if (isCopying || !course) return;
+    if (!isLoggedIn) {
+      setIsLoginModalOpen(true);
+      return;
+    }
 
     try {
       setIsCopying(true);
@@ -572,9 +584,11 @@ export default function DetailPage() {
                 type="button"
                 className="flex h-[73px] w-full items-center gap-[14px] rounded-[20px] bg-secondary-10 px-[15px] py-3 text-left"
                 onClick={() =>
-                  course.isMine
-                    ? navigate("/mypage", { state: { tab: "journal" } })
-                    : navigate(`/profile/${course.writerId}`)
+                  !isLoggedIn
+                    ? setIsLoginModalOpen(true)
+                    : course.isMine
+                      ? navigate("/mypage", { state: { tab: "journal" } })
+                      : navigate(`/profile/${course.writerId}`)
                 }
                 aria-label={`${course.writerName} 프로필 보기`}
               >
@@ -730,6 +744,12 @@ export default function DetailPage() {
             {isCopying ? "코스 만드는 중..." : "내 코스로 만들기"}
           </button>
         </footer>
+      )}
+      {isLoginModalOpen && (
+        <LeadToLoginModal
+          message={"이 기능을 이용하려면\n로그인이 필요해요!"}
+          onClose={() => setIsLoginModalOpen(false)}
+        />
       )}
     </main>
   );
