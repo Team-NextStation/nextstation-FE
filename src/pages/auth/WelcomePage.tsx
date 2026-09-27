@@ -27,6 +27,7 @@ import { getMyProfile } from '@/api/member';
 
 export default function WelcomePage() {
   const navigate = useNavigate();
+  const isNativeIOS = Capacitor.getPlatform() === 'ios';
 
   const handleKakaoLogin = () => {
     const restApiKey = import.meta.env.VITE_KAKAO_REST_API_KEY;
@@ -172,14 +173,16 @@ export default function WelcomePage() {
 
         <section className="mt-auto flex w-full flex-col items-center gap-[var(--welcome-stack-gap)]">
           <div className="flex w-full gap-5 items-center justify-center">
-            <button
-              type="button"
-              onClick={handleAppleLogin}
-              className="size-[var(--welcome-button-size)] rounded-full focus:outline-none focus:ring-2 focus:ring-primary-60"
-              aria-label="애플로 로그인"
-            >
-              <img src={appleImage} alt="" className="size-full" />
-            </button>
+            {isNativeIOS && (
+              <button
+                type="button"
+                onClick={handleAppleLogin}
+                className="size-[var(--welcome-button-size)] rounded-full focus:outline-none focus:ring-2 focus:ring-primary-60"
+                aria-label="애플로 로그인"
+              >
+                <img src={appleImage} alt="" className="size-full" />
+              </button>
+            )}
             <button
               type="button"
               onClick={handleKakaoLogin}
