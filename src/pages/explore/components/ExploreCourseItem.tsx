@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Heart from "@/assets/heart.svg?react";
 import CoursePhoto from "@/assets/card-default.svg?react";
 import HeartFilled from "@/assets/explore/heart-filled.svg?react";
@@ -7,6 +7,8 @@ import CourseRankBadge from "./CourseRankBadge";
 import { likeExploreCourse, unlikeExploreCourse } from "@/api/explore";
 import type { ExploreCourseLine } from "@/api/explore";
 import { formatExploreTag } from "../data/tagLabels";
+import LeadToLoginModal from "@/components/LeadToLoginModal";
+import { getAccessToken, subscribeToAccessTokenChange } from "@/api/auth";
 
 interface ExploreCourseItemProps {
   imageUrl?: string | null;
@@ -39,13 +41,28 @@ export default function ExploreCourseItem({
   tags = [],
 }: ExploreCourseItemProps) {
   const [liked, setLiked] = useState(isLiked);
+  const [originalLiked, setOriginalLiked] = useState(isLiked);
   const [isLikePending, setIsLikePending] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const displayedLikeCount =
-    likeCount + (liked === isLiked ? 0 : liked ? 1 : -1);
+    likeCount + (liked === originalLiked ? 0 : liked ? 1 : -1);
   const subwayLine = line ? getSubwayLine(line.code) : null;
+
+  useEffect(() => {
+    return subscribeToAccessTokenChange((token) => {
+      if (!token) {
+        setLiked(false);
+        setOriginalLiked(false);
+      }
+    });
+  }, []);
 
   const handleLike = async () => {
     if (isLikePending) return;
+    if (!getAccessToken()) {
+      setIsLoginModalOpen(true);
+      return;
+    }
 
     const nextLiked = !liked;
     setLiked(nextLiked);
@@ -64,7 +81,8 @@ export default function ExploreCourseItem({
   };
 
   return (
-    <article
+    <>
+      <article
         className="flex min-h-[120px] w-full items-center gap-3 rounded-lg bg-white p-3"
         onClick={onClick}
         onKeyDown={(event) => {
@@ -140,6 +158,13 @@ export default function ExploreCourseItem({
           ))}
         </div>
       </div>
-    </article>
+      </article>
+      {isLoginModalOpen && (
+        <LeadToLoginModal
+          message={"좋아요를 누르려면\n로그인이 필요해요!"}
+          onClose={() => setIsLoginModalOpen(false)}
+        />
+      )}
+    </>
   );
 }

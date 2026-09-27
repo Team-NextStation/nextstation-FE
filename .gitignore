@@ -15,8 +15,7 @@ dist-ssr
 # 환경변수
 .env
 .env.*
-!.env.example
-!.env.capacitor
+.env.capacitor
 
 # Editor directories and files
 .vscode/*

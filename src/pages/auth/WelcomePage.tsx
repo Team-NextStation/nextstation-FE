@@ -8,10 +8,22 @@ import cloudLeft from '@/assets/auth/welcome-cloud-left.svg';
 import cloudMiddle from '@/assets/auth/welcome-cloud-middle.svg';
 import cloudSmall from '@/assets/auth/welcome-cloud-small.svg';
 import cloudRight from '@/assets/auth/welcome-cloud-right.svg';
+import appleImage from '@/assets/auth/welcome-apple.svg';
 import kakaoImage from '@/assets/auth/welcome-kakao.svg';
 import Header from '@/components/Header';
 import CTAButton from '@/components/CTAButton';
-import { createKakaoOAuthState } from '@/api/auth';
+import { Capacitor } from '@capacitor/core';
+import { AppleSignIn } from '@/api/appleSignIn';
+import {
+  appleLogin,
+  createAppleNonce,
+  createKakaoOAuthState,
+  saveAccessToken,
+  saveAppleSignupToken,
+  saveRole,
+  saveSignupToken,
+} from '@/api/auth';
+import { getMyProfile } from '@/api/member';
 
 export default function WelcomePage() {
   const navigate = useNavigate();
@@ -37,6 +49,54 @@ export default function WelcomePage() {
     window.location.assign(
       `https://kauth.kakao.com/oauth/authorize?${params.toString()}`,
     );
+  };
+
+  const handleAppleLogin = async () => {
+    if (Capacitor.getPlatform() !== 'ios') {
+      window.alert('Apple 로그인은 iOS 앱에서만 사용할 수 있습니다.');
+      return;
+    }
+
+    const nonce = createAppleNonce();
+
+    try {
+      const { identityToken } = await AppleSignIn.signIn({ nonce });
+      const result = await appleLogin(identityToken, nonce);
+
+      if (result.resultType === 'LOGIN_SUCCESS' && result.accessToken) {
+        saveAccessToken(result.accessToken);
+        if (result.role) {
+          saveRole(result.role);
+        }
+        await getMyProfile();
+        navigate('/', { replace: true });
+        return;
+      }
+
+      if (result.resultType === 'PENDING_PROFILE' && result.signupToken) {
+        saveSignupToken(result.signupToken);
+        navigate('/auth/profile', { replace: true });
+        return;
+      }
+
+      if (result.resultType === 'NEW_MEMBER' && result.appleSignupToken) {
+        saveAppleSignupToken(result.appleSignupToken);
+        navigate('/auth/terms?provider=apple', { replace: true });
+        return;
+      }
+
+      window.alert('Apple 로그인 응답을 확인할 수 없습니다.');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('취소')) {
+        return;
+      }
+
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : 'Apple 로그인 요청에 실패했습니다.',
+      );
+    }
   };
 
   return (
@@ -111,7 +171,15 @@ export default function WelcomePage() {
         </p>
 
         <section className="mt-auto flex w-full flex-col items-center gap-[var(--welcome-stack-gap)]">
-          <div className="flex w-full justify-center">
+          <div className="flex w-full gap-5 items-center justify-center">
+            <button
+              type="button"
+              onClick={handleAppleLogin}
+              className="size-[var(--welcome-button-size)] rounded-full focus:outline-none focus:ring-2 focus:ring-primary-60"
+              aria-label="애플로 로그인"
+            >
+              <img src={appleImage} alt="" className="size-full" />
+            </button>
             <button
               type="button"
               onClick={handleKakaoLogin}
