@@ -84,6 +84,9 @@ const UserPage = lazy(() => import("@/pages/mypage/UserPage"));
 const UnwrittenJournalListPage = lazy(
   () => import("@/pages/mypage/UnwrittenJournalListPage"),
 );
+const BlockedUserListPage = lazy(
+  () => import("@/pages/mypage/BlockedUserListPage"),
+);
 
 // admin
 const HomePage = lazy(() => import("@/pages/admin/HomePage"));
@@ -211,6 +214,10 @@ function AppRoutes() {
           <Route
             path="/mypage/journal/unwritten"
             element={<UnwrittenJournalListPage />}
+          />
+          <Route
+            path="/mypage/blocked-users"
+            element={<BlockedUserListPage />}
           />
 
           {/* admin - admin일 때만 보일 수 있도록 AdminRoute로 보호 */}

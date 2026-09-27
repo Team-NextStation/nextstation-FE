@@ -29,6 +29,7 @@ export interface LikedCourseLine {
 export interface PublicMemberProfile extends MemberProfile {
   publicCourseCount: number;
   stampCount: number;
+  blocked: boolean;
 }
 
 export interface PublicMemberStamp {
