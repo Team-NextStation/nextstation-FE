@@ -6,6 +6,7 @@ export interface AuthContextValue {
   status: AuthStatus;
   isLoggedIn: boolean;
   isChecking: boolean;
+  isAdmin: boolean;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

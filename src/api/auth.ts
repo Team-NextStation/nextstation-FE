@@ -1,4 +1,4 @@
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 
 const AGREED_TERMS_STORAGE_KEY = "auth.agreedTermsIds";
 const REQUIRED_TERMS_AGREED_STORAGE_KEY = "auth.requiredTermsAgreed";
@@ -7,7 +7,9 @@ const ACCESS_TOKEN_STORAGE_KEY = "auth.accessToken";
 const KAKAO_SIGNUP_TOKEN_STORAGE_KEY = "auth.kakaoSignupToken";
 const KAKAO_PROFILE_STORAGE_KEY = "auth.kakaoProfile";
 const KAKAO_OAUTH_STATE_STORAGE_KEY = "auth.kakaoOAuthState";
+const APPLE_SIGNUP_TOKEN_STORAGE_KEY = "auth.appleSignupToken";
 const ACCESS_TOKEN_CHANGED_EVENT = "auth:access-token-changed";
+const ROLE_STORAGE_KEY = "auth.role";
 
 export type AuthTermType = "SERVICE" | "PRIVACY" | "MARKETING";
 
@@ -80,7 +82,10 @@ async function authRequest<T>(
 
 export function saveAgreedTermsIds(ids: number[], requiredTermsAgreed = false) {
   sessionStorage.setItem(AGREED_TERMS_STORAGE_KEY, JSON.stringify(ids));
-  sessionStorage.setItem(REQUIRED_TERMS_AGREED_STORAGE_KEY, String(requiredTermsAgreed));
+  sessionStorage.setItem(
+    REQUIRED_TERMS_AGREED_STORAGE_KEY,
+    String(requiredTermsAgreed),
+  );
 }
 
 export function getAgreedTermsIds(): number[] {
@@ -118,6 +123,7 @@ export function clearSignupFlow() {
   sessionStorage.removeItem(SIGNUP_TOKEN_STORAGE_KEY);
   sessionStorage.removeItem(KAKAO_SIGNUP_TOKEN_STORAGE_KEY);
   sessionStorage.removeItem(KAKAO_PROFILE_STORAGE_KEY);
+  sessionStorage.removeItem(APPLE_SIGNUP_TOKEN_STORAGE_KEY);
 }
 
 export function saveAccessToken(token: string) {
@@ -132,6 +138,7 @@ export function getAccessToken() {
 export function clearAccessToken() {
   sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
   notifyAccessTokenChanged(null);
+  clearRole();
 }
 
 let reissueAccessTokenPromise: Promise<string> | null = null;
@@ -160,8 +167,9 @@ function createAuthHeaders(
 async function requestAccessTokenReissue() {
   if (!reissueAccessTokenPromise) {
     reissueAccessTokenPromise = reissueAccessToken()
-      .then(({ accessToken }) => {
+      .then(({ accessToken, role }) => {
         saveAccessToken(accessToken);
+        saveRole(role);
         return accessToken;
       })
       .finally(() => {
@@ -198,10 +206,7 @@ export function subscribeToAccessTokenChange(
     listener((event as CustomEvent<string | null>).detail);
   };
 
-  window.addEventListener(
-    ACCESS_TOKEN_CHANGED_EVENT,
-    handleAccessTokenChanged,
-  );
+  window.addEventListener(ACCESS_TOKEN_CHANGED_EVENT, handleAccessTokenChanged);
 
   return () => {
     window.removeEventListener(
@@ -209,6 +214,19 @@ export function subscribeToAccessTokenChange(
       handleAccessTokenChanged,
     );
   };
+}
+
+// USER | ADMIN
+export function saveRole(role: string) {
+  sessionStorage.setItem(ROLE_STORAGE_KEY, role);
+}
+
+export function getRole() {
+  return sessionStorage.getItem(ROLE_STORAGE_KEY);
+}
+
+export function clearRole() {
+  sessionStorage.removeItem(ROLE_STORAGE_KEY);
 }
 
 export async function fetchWithRequiredAuth(
@@ -426,6 +444,7 @@ export function setupProfile(
 interface LoginResponse {
   memberId: number;
   accessToken: string;
+  role: "USER" | "ADMIN";
 }
 
 export function login(email: string, password: string) {
@@ -436,9 +455,12 @@ export function login(email: string, password: string) {
 }
 
 export function reissueAccessToken() {
-  return authRequest<{ accessToken: string }>("/api/v1/auth/reissue", {
-    method: "POST",
-  });
+  return authRequest<{ accessToken: string; role: "USER" | "ADMIN" }>(
+    "/api/v1/auth/reissue",
+    {
+      method: "POST",
+    },
+  );
 }
 
 export interface KakaoProfileDraft {
@@ -480,6 +502,7 @@ interface KakaoLoginResponse {
   kakaoSignupToken?: string;
   kakaoNickname?: string;
   kakaoProfileImageUrl?: string;
+  role?: "USER" | "ADMIN";
 }
 
 export function kakaoLogin(
@@ -492,6 +515,37 @@ export function kakaoLogin(
     signal,
     body: JSON.stringify({ code, redirectUri }),
   });
+}
+
+export function createAppleNonce() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
+interface AppleLoginResponse {
+  resultType: "LOGIN_SUCCESS" | "PENDING_PROFILE" | "NEW_MEMBER";
+  memberId?: number;
+  accessToken?: string;
+  signupToken?: string;
+  appleSignupToken?: string;
+  role?: "USER" | "ADMIN";
+}
+
+export function appleLogin(identityToken: string, nonce: string) {
+  return authRequest<AppleLoginResponse>("/api/v1/auth/apple/login", {
+    method: "POST",
+    body: JSON.stringify({ identityToken, nonce }),
+  });
+}
+
+export function saveAppleSignupToken(token: string) {
+  sessionStorage.setItem(APPLE_SIGNUP_TOKEN_STORAGE_KEY, token);
+}
+
+export function getAppleSignupToken() {
+  return sessionStorage.getItem(APPLE_SIGNUP_TOKEN_STORAGE_KEY);
 }
 
 export function sendPasswordResetVerification(email: string) {
@@ -538,12 +592,23 @@ export function kakaoSignup(
   });
 }
 
+export function appleSignup(
+  appleSignupToken: string,
+  agreedTermsIds: number[],
+) {
+  return authRequest<SignupResponse>("/api/v1/auth/apple/signup", {
+    method: "POST",
+    body: JSON.stringify({ appleSignupToken, agreedTermsIds }),
+  });
+}
+
 // 로그아웃
 export async function logout() {
   const accessToken = getAccessToken();
 
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
     method: "POST",
+    credentials: "include",
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },

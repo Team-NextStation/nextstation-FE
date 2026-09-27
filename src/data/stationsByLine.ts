@@ -11,7 +11,7 @@ export const LINES = [
   "9호선",
 ];
 
-const stationsByLineWithoutAll: Record<string, string[]> = {
+export const stationsByLineWithoutAll: Record<string, string[]> = {
   "1호선": ["제기동역", "동묘앞역", "신설동역", "외대앞역", "남영역"],
   "2호선": [
     "문래역",

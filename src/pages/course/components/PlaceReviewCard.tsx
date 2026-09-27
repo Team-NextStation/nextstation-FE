@@ -7,6 +7,7 @@ import {
   getPresignedUrl,
   uploadFileToPresignedUrl,
 } from "@/api/image";
+import { compressImage } from "@/utils/imageCompression";
 import { showToast } from "./ShowToast";
 
 interface PlaceReviewCardProps {
@@ -44,7 +45,8 @@ export default function PlaceReviewCard({
 
     try {
       const previousPhoto = photo;
-      const fileName = createUploadFileName(file);
+      const compressedFile = await compressImage(file);
+      const fileName = createUploadFileName(compressedFile);
       const presignedItem = await getPresignedUrl({
         folder: "JOURNAL",
         fileName,
@@ -52,7 +54,7 @@ export default function PlaceReviewCard({
 
       await uploadFileToPresignedUrl(
         presignedItem.presignedUrl,
-        file,
+        compressedFile,
         presignedItem.contentType,
       );
 

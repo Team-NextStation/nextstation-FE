@@ -1,6 +1,7 @@
 import ProfileDefault from "@/assets/profile-default.svg?react";
 import LikeDefault from "@/assets/like-default.svg?react";
 import LikeActive from "@/assets/like-active.svg?react";
+import MoreIcon from "@/assets/like/more.svg?react";
 import { useRef, useState } from "react";
 
 export default function ReviewCard({
@@ -12,6 +13,8 @@ export default function ReviewCard({
   isLiked,
   onToggleLike,
   createdAt,
+  isMine,
+  onReport,
 }: {
   writerNickname: string;
   writerProfileImageUrl: string;
@@ -21,6 +24,8 @@ export default function ReviewCard({
   isLiked: boolean;
   onToggleLike: () => Promise<void>;
   createdAt: string;
+  isMine: boolean;
+  onReport: () => void;
 }) {
   const [now] = useState(() => Date.now());
   const diffDays = Math.floor(
@@ -46,7 +51,7 @@ export default function ReviewCard({
   return (
     <div className="flex flex-col w-[360px] p-4 gap-4 rounded-lg bg-white items-center">
       {/* user info */}
-      <section className="flex items-center w-full">
+      <section className="flex items-center w-full justify-between">
         <div className="flex gap-3 items-center">
           {/* 프로필 사진 */}
           {writerProfileImageUrl === null ? (
@@ -70,6 +75,11 @@ export default function ReviewCard({
             </span>
           </div>
         </div>
+        {!isMine && (
+          <button onClick={onReport}>
+            <MoreIcon className="size-6" />
+          </button>
+        )}
       </section>
 
       {/* place info */}

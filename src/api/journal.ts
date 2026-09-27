@@ -4,7 +4,7 @@ import {
   getAccessToken,
 } from "@/api/auth";
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 
 export type TravelDuration = "SHORT" | "HALF_DAY" | "FULL_DAY";
 

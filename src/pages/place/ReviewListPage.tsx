@@ -12,6 +12,8 @@ import {
   type Review,
 } from "@/api/placeReview";
 import { useInView } from "react-intersection-observer";
+import ReportModal from "@/components/ReportModal";
+import { getCachedMyProfile } from "@/api/member";
 
 type Option = {
   label: string;
@@ -34,6 +36,8 @@ export default function ReviewListPage() {
   const [reviewsError, setReviewsError] = useState<string | null>(null);
   const isEmpty = reviews.length === 0;
   const [selectedOption, setSelectedOption] = useState<Option>(sortOptions[0]);
+  const [reportingReview, setReportingReview] = useState<Review | null>(null);
+  const myMemberId = getCachedMyProfile()?.memberId ?? null;
 
   // 최초 로드 및 정렬 변경 시 재조회
   useEffect(() => {
@@ -139,6 +143,29 @@ export default function ReviewListPage() {
         <Header showBack title={`리뷰 ${totalCount}개`} />
       )}
 
+      {reportingReview && (
+        <ReportModal
+          mode="content"
+          reportTarget={reportingReview.writerNickname}
+          targetMemberId={reportingReview.writerId}
+          targetType="PLACE_REVIEW"
+          targetId={reportingReview.reviewId}
+          onClose={() => setReportingReview(null)}
+          onBlock={() => {
+            const removedCount = reviews.filter(
+              (r) => r.writerId === reportingReview.writerId,
+            ).length;
+
+            setReviews((prev) =>
+              prev.filter((r) => r.writerId !== reportingReview.writerId),
+            );
+            setTotalCount((count) =>
+              count === null ? count : Math.max(0, count - removedCount),
+            );
+          }}
+        />
+      )}
+
       <section className="flex flex-1 flex-col">
         {/* dropdown */}
         <section className="flex justify-center">
@@ -185,6 +212,8 @@ export default function ReviewListPage() {
                   isLiked={review.isLiked}
                   onToggleLike={() => handleToggleLike(review)}
                   createdAt={review.createdAt}
+                  isMine={review.writerId === myMemberId}
+                  onReport={() => setReportingReview(review)}
                 />
               ))}
               {isLoadingMore && (

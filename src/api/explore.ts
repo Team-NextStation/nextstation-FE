@@ -4,7 +4,7 @@ import {
   getAccessToken,
 } from "./auth";
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 
 export interface ExploreCourseLine {
   id: number;
@@ -63,13 +63,6 @@ async function request<T>(path: string): Promise<T> {
   return json.data as T;
 }
 
-async function requiredAuthRequest<T>(path: string): Promise<T> {
-  const response = await fetchWithRequiredAuth(`${API_BASE_URL}${path}`);
-  if (!response.ok) throw new Error("둘러보기 정보를 불러오지 못했습니다.");
-  const json = await response.json();
-  return json.data as T;
-}
-
 function query(
   path: string,
   values: Record<string, string | number | undefined>,
@@ -97,14 +90,14 @@ export const getPopularExploreCourses = (cursor?: string, size = 30) =>
     query("/api/v1/explore/courses/popular", { cursor, size }),
   );
 export const getConceptTours = () =>
-  requiredAuthRequest<ConceptTour[]>("/api/v1/explore/concept-tours");
+  request<ConceptTour[]>("/api/v1/explore/concept-tours");
 export const getConceptTourCourses = (
   conceptTourId: number,
   sort: ExploreSort = "POPULAR",
   cursor?: string,
   size = 10,
 ) =>
-  requiredAuthRequest<ExploreCourseListResponse>(
+  request<ExploreCourseListResponse>(
     query(`/api/v1/explore/concept-tours/${conceptTourId}/courses`, {
       sort,
       cursor,

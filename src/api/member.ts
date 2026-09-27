@@ -29,6 +29,7 @@ export interface LikedCourseLine {
 export interface PublicMemberProfile extends MemberProfile {
   publicCourseCount: number;
   stampCount: number;
+  blocked: boolean;
 }
 
 export interface PublicMemberStamp {
@@ -54,7 +55,7 @@ export interface PublicMemberCourses {
   hasNext: boolean;
 }
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "@/api/config";
 const MEMBER_PROFILE_STORAGE_KEY = "member.profile";
 
 async function getPublicMemberData<T>(path: string): Promise<T> {

@@ -9,6 +9,7 @@ import {
   kakaoLogin,
   saveAccessToken,
   saveKakaoProfile,
+  saveRole,
   saveKakaoSignupToken,
   saveSignupToken,
 } from '@/api/auth';
@@ -55,6 +56,9 @@ export default function KakaoCallbackPage() {
 
         if (result.resultType === 'LOGIN_SUCCESS' && result.accessToken) {
           saveAccessToken(result.accessToken);
+          if (result.role) {
+            saveRole(result.role);
+          }
           await getMyProfile();
           clearSignupFlow();
           navigate('/', { replace: true });
