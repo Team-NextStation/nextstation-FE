@@ -7,14 +7,14 @@ import Header from "@/components/Header";
 import StationTitle from "@/components/StationTitle";
 import type { SubwayLine } from "@/types/subway";
 import { useEffect, useRef, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import {
   useLocation,
   useNavigate,
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { CustomOverlayMap, Map, useKakaoLoader } from "react-kakao-maps-sdk";
-import MapMarker from "./components/MapMarker";
+import CourseMap from "./components/CourseMap";
 import { Reorder } from "motion/react";
 import NameEditInput from "./components/NameEditInput";
 import ConfirmModal from "@/components/ConfirmModal";
@@ -144,10 +144,6 @@ export default function VerifyPage() {
   const isRecommendDraft = from === "recommend" && course?.courseId === null;
   const isCopyPreviewDraft =
     from === "copy" && course?.courseId === null && !isSharedView;
-
-  const [loading, error] = useKakaoLoader({
-    appkey: import.meta.env.VITE_KAKAO_API,
-  });
 
   useEffect(() => {
     if ((!courseId && !shareToken) || synced) return;
@@ -390,18 +386,6 @@ export default function VerifyPage() {
     navigate("/");
   };
 
-  if (loading || error) {
-    if (error) {
-      return (
-        <main className="flex h-dvh items-center justify-center bg-gray-10 text-body-01 text-gray-70">
-          지도를 불러오지 못했어요.
-        </main>
-      );
-    }
-
-    return <BaseLoading />;
-  }
-
   if (isPlacesLoading) return <BaseLoading />;
   if (placesError) {
     return (
@@ -517,28 +501,29 @@ export default function VerifyPage() {
                   <MapIcon className="h-6 w-6 cursor-pointer text-gray-70" />
                 </button>
               </div>
-              <Map
-                center={
-                  places[0]
-                    ? { lat: places[0].yCoordinate, lng: places[0].xCoordinate }
-                    : { lat: 37.5665, lng: 126.978 }
-                }
-                level={6}
-                style={{ width: "100%", height: "300px" }}
-              >
-                {places.map((place, i) => (
-                  <CustomOverlayMap
-                    key={place.placeId}
-                    position={{
+              <div className="h-[300px] w-full">
+                {Capacitor.getPlatform() === "ios" ? (
+                  <iframe
+                    title="내 코스 지도"
+                    src={`https://www.nextstation.kr/map.html?points=${encodeURIComponent(
+                      JSON.stringify(
+                        places.map((place) => ({
+                          lat: place.yCoordinate,
+                          lng: place.xCoordinate,
+                        })),
+                      ),
+                    )}`}
+                    className="h-full w-full border-0"
+                  />
+                ) : (
+                  <CourseMap
+                    points={places.map((place) => ({
                       lat: place.yCoordinate,
                       lng: place.xCoordinate,
-                    }}
-                    yAnchor={1}
-                  >
-                    <MapMarker number={i + 1} />
-                  </CustomOverlayMap>
-                ))}
-              </Map>
+                    }))}
+                  />
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex items-center justify-between rounded-lg border border-gray-40 bg-white p-4">
