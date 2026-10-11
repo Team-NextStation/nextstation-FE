@@ -406,9 +406,15 @@ export default function VerifyPage() {
 
     const shareUrl = buildSharedCourseUrl(currentShareToken);
 
-    await share({
+    const result = await share({
       url: shareUrl,
     });
+
+    if (result === "copiedToClipboard") {
+      showToast({ message: "클립보드에 복사되었습니다!" });
+    } else if (result === "failed") {
+      showToast({ message: "공유에 실패했습니다." });
+    }
   };
 
   const handleCloseClick = () => {

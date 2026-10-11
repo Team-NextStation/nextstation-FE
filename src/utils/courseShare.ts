@@ -1,5 +1,6 @@
-const FALLBACK_SHARE_ORIGIN =
-  "https://next-station-git-develop-canofmatos-projects.vercel.app";
+import { Capacitor } from "@capacitor/core";
+
+const PUBLIC_SHARE_ORIGIN = "https://www.nextstation.kr";
 
 export function buildSharedCoursePath(shareToken: string) {
   return `/course/share/${shareToken}/verify`;
@@ -8,9 +9,9 @@ export function buildSharedCoursePath(shareToken: string) {
 export function buildSharedCourseUrl(
   shareToken: string,
   origin =
-    typeof window !== "undefined"
+    typeof window !== "undefined" && !Capacitor.isNativePlatform()
       ? window.location.origin
-      : FALLBACK_SHARE_ORIGIN,
+      : PUBLIC_SHARE_ORIGIN,
 ) {
   const normalizedOrigin = origin.endsWith("/") ? origin.slice(0, -1) : origin;
 
