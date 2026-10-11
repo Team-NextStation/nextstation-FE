@@ -12,6 +12,14 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss(), svgr()],
+    build: {
+      rolldownOptions: {
+        input: {
+          main: path.resolve(__dirname, "index.html"),
+          map: path.resolve(__dirname, "map.html"),
+        },
+      },
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

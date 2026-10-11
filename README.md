@@ -53,15 +53,6 @@
       <br>
       <small>13기 FE</small>
     </td>
-    <td align="center" width="200px">
-      <a href="https://github.com/kdhye516">
-        <img src="https://github.com/kdhye516.png" width="110px" style="border-radius: 50%;" alt="김다혜 프로필"/><br />
-        <br />
-        <strong>김다혜</strong>
-      </a>
-      <br>
-      <small>13기 FE</small>
-    </td>
   </tr>
 </table>
 
@@ -84,7 +75,7 @@ npm run dev
 ```
 
 ## 배포 주소
-🔗 [nextstation.kr](https://nextstation-eta.vercel.app/)
+🔗 [nextstation.kr](www.nextstation.kr)
 
 ## Contact
-📧 [Gmail](mailto:nextstation.app@gmail.com)
+📧 [Gmail](mailto:team.nextstation@gmail.com)
