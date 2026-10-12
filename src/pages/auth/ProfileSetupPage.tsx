@@ -25,8 +25,6 @@ const genderOptions: Array<{ label: string; value: Gender }> = [
   { label: '선택 안함', value: 'none' },
 ];
 
-const birthdayPattern = /^(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$/;
-
 const validateNickname = (value: string, shouldRequire = false) => {
   const trimmedValue = value.trim();
 
@@ -53,27 +51,6 @@ const validateNickname = (value: string, shouldRequire = false) => {
   return '';
 };
 
-const validateBirthday = (value: string, shouldRequire = false) => {
-  if (!value) {
-    return shouldRequire ? '생년월일을 입력해주세요.' : '';
-  }
-
-  if (!birthdayPattern.test(value)) {
-    return 'YYYYMMDD 형식을 지켜주세요.';
-  }
-
-  const year = Number(value.slice(0, 4));
-  const month = Number(value.slice(4, 6));
-  const day = Number(value.slice(6, 8));
-  const date = new Date(Date.UTC(year, month - 1, day));
-  const isValidDate =
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day;
-
-  return isValidDate ? '' : '유효한 생년월일을 입력해주세요.';
-};
-
 export default function ProfileSetupPage() {
   const navigate = useNavigate();
   const [kakaoProfile] = useState(() => getKakaoProfile());
@@ -83,13 +60,11 @@ export default function ProfileSetupPage() {
     () => kakaoProfile?.profileImageUrl ?? '',
   );
   const [nickname, setNickname] = useState(() => kakaoProfile?.nickname ?? '');
-  const [birthday, setBirthday] = useState('');
   const [gender, setGender] = useState<Gender | ''>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [errors, setErrors] = useState({
     nickname: '',
-    birthday: '',
   });
 
   useEffect(() => {
@@ -124,15 +99,12 @@ export default function ProfileSetupPage() {
     !nickname.trim() ||
     Boolean(validateNickname(nickname)) ||
     !gender ||
-    !birthday ||
-    Boolean(validateBirthday(birthday)) ||
     isSubmitting;
 
   const handleNext = async () => {
     setSubmitError('');
     const nextErrors = {
       nickname: validateNickname(nickname, true),
-      birthday: validateBirthday(birthday, true),
     };
 
     setErrors(nextErrors);
@@ -175,7 +147,6 @@ export default function ProfileSetupPage() {
         nickname: nickname.trim(),
         ...(profileImageUrl ? { profileImageUrl } : {}),
         gender: genderByApi[gender],
-        birthDate: birthday,
       });
       saveAccessToken(accessToken);
       clearSignupFlow();
@@ -189,13 +160,10 @@ export default function ProfileSetupPage() {
 
       if (error instanceof AuthApiError) {
         const nicknameError = error.reasons?.nickname ?? '';
-        const birthdayError = error.reasons?.birthDate ?? '';
-
-        if (nicknameError || birthdayError) {
+        if (nicknameError) {
           setErrors((value) => ({
             ...value,
             nickname: nicknameError,
-            birthday: birthdayError,
           }));
         } else {
           setSubmitError(error.message);
@@ -297,21 +265,6 @@ export default function ProfileSetupPage() {
             </div>
           </div>
 
-          <AuthInput
-            label="생년월일"
-            value={birthday}
-            onChange={(event) => {
-              const nextBirthday = event.target.value;
-              setBirthday(nextBirthday);
-              setErrors((value) => ({
-                ...value,
-                birthday: validateBirthday(nextBirthday),
-              }));
-            }}
-            placeholder="ex. 20010101"
-            inputMode="numeric"
-            errorMessage={errors.birthday}
-          />
         </section>
 
       </section>

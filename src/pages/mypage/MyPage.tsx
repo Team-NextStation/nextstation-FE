@@ -84,7 +84,6 @@ export default function MyPage() {
       id: "account",
       title: "계정 관리",
       items: [
-        { label: "계정 정보" },
         {
           label: "차단한 사용자",
           onClick: () => navigate("/mypage/blocked-users"),
