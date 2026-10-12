@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { buildNativeKakaoCallback } from '@/utils/kakaoNative';
 import {
   AuthApiError,
   clearKakaoOAuthState,
@@ -16,12 +18,36 @@ import {
 import { getMyProfile } from '@/api/member';
 
 export default function KakaoCallbackPage() {
+  const [searchParams] = useSearchParams();
+  const nativeCallbackUrl = Capacitor.getPlatform() === 'web'
+    ? buildNativeKakaoCallback(searchParams.toString())
+    : null;
+
+  return nativeCallbackUrl
+    ? <NativeKakaoReturnPage url={nativeCallbackUrl} />
+    : <KakaoLoginResultPage />;
+}
+
+function NativeKakaoReturnPage({ url }: { url: string }) {
+  useEffect(() => {
+    window.location.replace(url);
+  }, [url]);
+
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-white px-[15px] text-center text-gray-100">
+      <p>앱으로 돌아가 로그인을 완료해주세요.</p>
+      <a href={url} className="text-primary-60 underline">환승여행 앱으로 돌아가기</a>
+    </main>
+  );
+}
+
+function KakaoLoginResultPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const code = searchParams.get('code');
   const kakaoError = searchParams.get('error');
   const returnedState = searchParams.get('state');
-  const expectedState = getKakaoOAuthState();
+  const [expectedState] = useState(getKakaoOAuthState);
   const redirectUri = getKakaoRedirectUri();
   const isValidState =
     Boolean(returnedState) && returnedState === expectedState;
@@ -36,10 +62,13 @@ export default function KakaoCallbackPage() {
       return undefined;
     }
 
-    clearKakaoOAuthState();
     const controller = new AbortController();
 
     const processKakaoLogin = async () => {
+      // StrictMode의 첫 effect 정리가 끝난 뒤 코드를 한 번만 교환한다.
+      await Promise.resolve();
+      if (controller.signal.aborted) return;
+      clearKakaoOAuthState();
       try {
         const result = await kakaoLogin(code, redirectUri, controller.signal);
 
