@@ -1,4 +1,7 @@
 import { useNavigate } from 'react-router-dom';
+import { useRef, useState } from 'react';
+import { Browser } from '@capacitor/browser';
+import { App } from '@capacitor/app';
 import titleImage from '@/assets/splash.svg';
 import archesImage from '@/assets/auth/welcome-arches.png';
 import trainCarImage from '@/assets/auth/welcome-train-car.png';
@@ -18,38 +21,66 @@ import {
   appleLogin,
   createAppleNonce,
   createKakaoOAuthState,
+  clearKakaoOAuthState,
+  getKakaoRedirectUri,
   saveAccessToken,
   saveAppleSignupToken,
   saveRole,
   saveSignupToken,
 } from '@/api/auth';
 import { getMyProfile } from '@/api/member';
+import { runNativeKakaoLogin } from '@/utils/kakaoNative';
 
 export default function WelcomePage() {
   const navigate = useNavigate();
   const isNativeIOS = Capacitor.getPlatform() === 'ios';
+  const kakaoLoginPending = useRef(false);
+  const [isKakaoLoggingIn, setIsKakaoLoggingIn] = useState(false);
 
-  const handleKakaoLogin = () => {
+  const handleKakaoLogin = async () => {
+    if (kakaoLoginPending.current) return;
     const restApiKey = import.meta.env.VITE_KAKAO_REST_API_KEY;
-    const redirectUri =
-      import.meta.env.VITE_KAKAO_REDIRECT_URI ??
-      `${window.location.origin}/auth/kakao/callback`;
+    const redirectUri = getKakaoRedirectUri();
 
     if (!restApiKey) {
       window.alert('카카오 REST API 키가 설정되지 않았습니다.');
       return;
     }
 
-    const params = new URLSearchParams({
-      client_id: restApiKey,
-      redirect_uri: redirectUri,
-      response_type: 'code',
-      state: createKakaoOAuthState(),
-    });
+    kakaoLoginPending.current = true;
+    setIsKakaoLoggingIn(true);
+    try {
+      const state = createKakaoOAuthState(isNativeIOS);
+      const params = new URLSearchParams({
+        client_id: restApiKey,
+        redirect_uri: redirectUri,
+        response_type: 'code',
+        state,
+      });
+      const url = `https://kauth.kakao.com/oauth/authorize?${params}`;
+      if (!isNativeIOS) {
+        window.location.assign(url);
+        return;
+      }
 
-    window.location.assign(
-      `https://kauth.kakao.com/oauth/authorize?${params.toString()}`,
-    );
+      const path = await runNativeKakaoLogin(url, state, {
+        listenUrl: (listener) => App.addListener('appUrlOpen', ({ url }) => listener(url)),
+        listenFinished: (listener) => Browser.addListener('browserFinished', listener),
+        open: (url) => Browser.open({ url }),
+        close: () => Browser.close(),
+      });
+      if (path) {
+        navigate(path, { replace: true });
+      } else {
+        clearKakaoOAuthState();
+      }
+    } catch {
+      clearKakaoOAuthState();
+      window.alert('카카오 로그인 화면을 열지 못했습니다. 다시 시도해주세요.');
+    } finally {
+      kakaoLoginPending.current = false;
+      setIsKakaoLoggingIn(false);
+    }
   };
 
   const handleAppleLogin = async () => {
@@ -177,6 +208,7 @@ export default function WelcomePage() {
               <button
                 type="button"
                 onClick={handleAppleLogin}
+                disabled={isKakaoLoggingIn}
                 className="size-[var(--welcome-button-size)] rounded-full focus:outline-none focus:ring-2 focus:ring-primary-60"
                 aria-label="애플로 로그인"
               >
@@ -186,6 +218,8 @@ export default function WelcomePage() {
             <button
               type="button"
               onClick={handleKakaoLogin}
+              disabled={isKakaoLoggingIn}
+              aria-busy={isKakaoLoggingIn}
               className="size-[var(--welcome-button-size)] rounded-full focus:outline-none focus:ring-2 focus:ring-primary-60"
               aria-label="카카오로 로그인"
             >
