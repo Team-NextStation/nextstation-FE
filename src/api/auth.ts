@@ -1,5 +1,4 @@
 import { API_BASE_URL } from "@/api/config";
-import { NATIVE_KAKAO_STATE_PREFIX } from "@/utils/kakaoNative";
 
 const AGREED_TERMS_STORAGE_KEY = "auth.agreedTermsIds";
 const REQUIRED_TERMS_AGREED_STORAGE_KEY = "auth.requiredTermsAgreed";
@@ -302,12 +301,11 @@ export function getTerm(type: AuthTermType) {
   });
 }
 
-export function createKakaoOAuthState(nativeIOS = false) {
+export function createKakaoOAuthState() {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
-  const randomState = Array.from(bytes, (byte) =>
+  const state = Array.from(bytes, (byte) =>
     byte.toString(16).padStart(2, "0"),
   ).join("");
-  const state = nativeIOS ? `${NATIVE_KAKAO_STATE_PREFIX}${randomState}` : randomState;
   sessionStorage.setItem(KAKAO_OAUTH_STATE_STORAGE_KEY, state);
   return state;
 }
