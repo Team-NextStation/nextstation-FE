@@ -430,7 +430,6 @@ export function setupProfile(
     nickname: string;
     profileImageUrl?: string;
     gender: "MALE" | "FEMALE" | "UNSPECIFIED";
-    birthDate: string;
   },
 ) {
   return authRequest<ProfileResponse>("/api/v1/auth/profile", {
