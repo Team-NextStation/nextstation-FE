@@ -11,6 +11,7 @@ const KAKAO_OAUTH_STATE_STORAGE_KEY = "auth.kakaoOAuthState";
 const APPLE_SIGNUP_TOKEN_STORAGE_KEY = "auth.appleSignupToken";
 const ACCESS_TOKEN_CHANGED_EVENT = "auth:access-token-changed";
 const ROLE_STORAGE_KEY = "auth.role";
+const TOKEN_REISSUE_TIMEOUT_MS = 5000;
 
 export type AuthTermType = "SERVICE" | "PRIVACY" | "MARKETING";
 
@@ -455,13 +456,33 @@ export function login(email: string, password: string) {
   });
 }
 
-export function reissueAccessToken() {
-  return authRequest<{ accessToken: string; role: "USER" | "ADMIN" }>(
-    "/api/v1/auth/reissue",
-    {
-      method: "POST",
-    },
-  );
+export async function reissueAccessToken() {
+  const controller = new AbortController();
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error("토큰 재발급 요청 시간이 초과되었습니다."));
+      controller.abort();
+    }, TOKEN_REISSUE_TIMEOUT_MS);
+  });
+
+  try {
+    // Bound the wait even if the native HTTP bridge does not honor abort.
+    // Race before saving tokens so a late response cannot restore the session.
+    return await Promise.race([
+      authRequest<{ accessToken: string; role: "USER" | "ADMIN" }>(
+        "/api/v1/auth/reissue",
+        {
+          method: "POST",
+          signal: controller.signal,
+        },
+      ),
+      timeout,
+    ]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export interface KakaoProfileDraft {
