@@ -36,11 +36,11 @@ function MainPage() {
       </section>
 
     {/* Door */}
-    <section className='relative flex justify-center [@media(max-height:800px)]:min-h-0 [@media(max-height:800px)]:overflow-hidden'>
+    <section className="relative flex justify-center [@media(max-height:800px)]:min-h-0 [@media(max-height:800px)]:before:pointer-events-none [@media(max-height:800px)]:before:absolute [@media(max-height:800px)]:before:inset-x-0 [@media(max-height:800px)]:before:top-0 [@media(max-height:800px)]:before:h-[10px] [@media(max-height:800px)]:before:bg-[#F0F0F0] [@media(max-height:800px)]:after:pointer-events-none [@media(max-height:800px)]:after:absolute [@media(max-height:800px)]:after:left-1/2 [@media(max-height:800px)]:after:top-0 [@media(max-height:800px)]:after:bottom-[calc(-86px-var(--safe-bottom))] [@media(max-height:800px)]:after:w-[10px] [@media(max-height:800px)]:after:-translate-x-1/2 [@media(max-height:800px)]:after:bg-[#F0F0F0]">
       <div className='flex w-full'>
         {/* 왼쪽 문 */}
         <div className="relative h-full w-1/2">
-          <DoorLeft className="h-full w-full [@media(max-height:800px)]:h-[min(600px,calc(100%/0.72))]" />
+          <DoorLeft preserveAspectRatio="xMaxYMin meet" className="h-full w-full [@media(max-height:800px)]:h-[min(600px,calc(100%/0.72))]" />
           <Button
             direction="left"
             onClick={() =>
@@ -55,7 +55,7 @@ function MainPage() {
         </div>
         {/* 오른쪽 문 */}
         <div className="relative h-full w-1/2">
-          <DoorRight className="h-full w-full [@media(max-height:800px)]:h-[min(600px,calc(100%/0.72))]" />
+          <DoorRight preserveAspectRatio="xMinYMin meet" className="h-full w-full [@media(max-height:800px)]:h-[min(600px,calc(100%/0.72))]" />
           <Button
             direction="right"
             onClick={() => navigate('/draw/recommend')}
