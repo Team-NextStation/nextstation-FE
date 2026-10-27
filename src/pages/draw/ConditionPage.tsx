@@ -103,7 +103,7 @@ function ConditionPage() {
     <main className="flex flex-col h-dvh overflow-hidden bg-white items-center pt-[var(--safe-top)]">
       <Header showBack/>
 
-      <section className="flex h-full flex-col items-center justify-between pt-10 pb-[calc(var(--safe-bottom)+10px)]">
+      <section className="flex h-full flex-col items-center justify-between pt-4 pb-[calc(var(--safe-bottom)+10px)]">
         <div className="flex flex-col items-center gap-8">
           <h1 className="text-headline font-semibold text-gray-100 leading-[1.4] tracking-[-0.025em] text-center">
             어디서, 얼마나, 누구와 <br />

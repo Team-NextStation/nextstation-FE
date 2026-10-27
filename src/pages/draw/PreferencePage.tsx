@@ -114,7 +114,7 @@ function PreferencePage() {
     <main className="flex flex-col h-dvh overflow-hidden bg-white items-center pt-[var(--safe-top)]">
       <Header showBack onBackClick={handleBack} />
 
-      <section className="flex h-full flex-col items-center justify-between pt-10 pb-[calc(var(--safe-bottom)+10px)]">
+      <section className="flex h-full flex-col items-center justify-between pt-4 pb-[calc(var(--safe-bottom)+10px)]">
         <div className="flex flex-col items-center gap-[50px]">
           <div className="flex flex-col items-center gap-4">
             <h1 className="text-headline font-semibold text-gray-100 leading-[1.4] tracking-[-0.025em] text-center">
