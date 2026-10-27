@@ -37,7 +37,7 @@ function ResultPage() {
   const randomCourse = "course" in result ? result.course : undefined;
 
   return (
-    <main className="relative flex flex-col h-dvh overflow-hidden bg-gray-10 gap-8 pt-[calc(var(--safe-top)+12px)]">
+    <main className="relative flex flex-col h-dvh overflow-hidden bg-gray-10 pt-[calc(var(--safe-top)+12px)]">
       <Header showClose onCloseClick={() => navigate('/')}/>
 
       {/* title */}
@@ -49,7 +49,7 @@ function ResultPage() {
       </section>
 
       {/* Description */}
-      <section className='flex flex-1 justify-center'>
+      <section className='flex flex-1 justify-center mt-6'>
         <div className='flex flex-col w-[355px] self-stretch rounded-t-[48px] px-3 pt-6 gap-6 bg-white'>
           <div className='flex flex-col gap-4 items-center'>
             
