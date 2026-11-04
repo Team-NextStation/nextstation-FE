@@ -1,7 +1,7 @@
 import Header from "@/components/Header";
 import BaseLoading from "@/components/BaseLoading";
 import ReviewCard from "./components/ReviewCard";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Empty from "@/assets/empty.svg?react";
 import Dropdown from "./components/Dropdown";
 import { useParams } from "react-router-dom";
@@ -37,6 +37,7 @@ export default function ReviewListPage() {
   const isEmpty = reviews.length === 0;
   const [selectedOption, setSelectedOption] = useState<Option>(sortOptions[0]);
   const [reportingReview, setReportingReview] = useState<Review | null>(null);
+  const blockedWriterIdsRef = useRef(new Set<number>());
   const myMemberId = getCachedMyProfile()?.memberId ?? null;
 
   // 최초 로드 및 정렬 변경 시 재조회
@@ -50,7 +51,11 @@ export default function ReviewListPage() {
         const data = await getReviews(Number(placeId), selectedOption.value);
         if (ignore) return; // 요청이 이미 시작된 응답이면 무시
 
-        setReviews(data.reviews);
+        setReviews(
+          data.reviews.filter(
+            (review) => !blockedWriterIdsRef.current.has(review.writerId),
+          ),
+        );
         setNextCursor(data.nextCursor);
         setHasNext(data.hasNext);
         if (data.totalCount !== null) {
@@ -81,7 +86,12 @@ export default function ReviewListPage() {
         selectedOption.value,
         nextCursor,
       );
-      setReviews((prev) => [...prev, ...data.reviews]);
+      setReviews((prev) => [
+        ...prev,
+        ...data.reviews.filter(
+          (review) => !blockedWriterIdsRef.current.has(review.writerId),
+        ),
+      ]);
       setNextCursor(data.nextCursor);
       setHasNext(data.hasNext);
     } catch (e) {
@@ -152,6 +162,7 @@ export default function ReviewListPage() {
           targetId={reportingReview.reviewId}
           onClose={() => setReportingReview(null)}
           onBlock={() => {
+            blockedWriterIdsRef.current.add(reportingReview.writerId);
             const removedCount = reviews.filter(
               (r) => r.writerId === reportingReview.writerId,
             ).length;
