@@ -487,6 +487,10 @@ export default function DetailPage() {
           targetType="JOURNAL"
           targetId={journalId}
           onClose={() => setIsReportModalOpen(false)}
+          onBlock={() => {
+            showToast({ message: "사용자를 차단했습니다." });
+            navigate("/explore", { replace: true });
+          }}
         />
       )}
 

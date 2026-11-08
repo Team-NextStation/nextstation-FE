@@ -99,7 +99,7 @@ export default function UserPage() {
   }, [hasValidMemberId, memberId]);
 
   const loadMoreJournals = async () => {
-    if (!nextCursor || isLoadingMore) return;
+    if (isBlocked || !nextCursor || isLoadingMore) return;
 
     try {
       setIsLoadingMore(true);
@@ -119,7 +119,7 @@ export default function UserPage() {
     threshold: 0.5,
     rootMargin: "200px",
     onChange: (inView) => {
-      if (inView && hasNext && !isLoadingMore) {
+      if (inView && !isBlocked && hasNext && !isLoadingMore) {
         void loadMoreJournals();
       }
     },
@@ -147,7 +147,12 @@ export default function UserPage() {
           targetType="PROFILE"
           targetId={memberId}
           onClose={() => setIsReportModalOpen(false)}
-          onBlock={() => setIsBlocked(true)}
+          onBlock={() => {
+            setIsBlocked(true);
+            setJournals([]);
+            setNextCursor(null);
+            setHasNext(false);
+          }}
         />
       )}
 
@@ -252,6 +257,10 @@ export default function UserPage() {
       <section className="flex justify-center">
         {isStampMode ? (
           <StampListView isMyProfile={false} stamps={stamps} />
+        ) : isBlocked ? (
+          <p className="mt-10 text-body-02 text-gray-70">
+            차단한 사용자의 여행일지는 표시되지 않습니다.
+          </p>
         ) : journals.length === 0 ? (
           <PublicJournalEmpty
             className="mt-[140px] h-[226px] w-[180px] shrink-0"
