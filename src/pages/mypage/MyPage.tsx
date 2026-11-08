@@ -1,5 +1,6 @@
 import Setting from "@/assets/setting.svg?react";
 import BaseLoading from "@/components/BaseLoading";
+import ErrorPage from "@/pages/ErrorPage";
 import ProfileDefault from "@/assets/profile-default.svg?react";
 import Edit from "@/assets/edit-profile.svg?react";
 import JournalAdd from "@/assets/journal-add.svg?react";
@@ -196,7 +197,7 @@ export default function MyPage() {
   });
 
   if (isMyProfileLoading) return <BaseLoading />;
-  if (myProfileError) return <p>{myProfileError}</p>;
+  if (myProfileError) return <ErrorPage />;
   if (!myProfile) return null;
 
   const closeCreateJournalModal = () => {

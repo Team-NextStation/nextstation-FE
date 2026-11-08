@@ -11,11 +11,12 @@ import {
   type CustomRecommendationRequest,
   type CustomRecommendationResponseData,
 } from "@/api/recommendation";
-import { drawRandomStation, RandomDrawNotFoundError } from "@/api/random";
+import { drawRandomStation } from "@/api/random";
 import loadingComplete from "@/assets/lottie/loading-complete.json";
 import loadingSearch from "@/assets/lottie/loading-search.json";
 
 const SEARCH_MIN_LOADING_MS = 2500;
+const RESULT_REQUEST_TIMEOUT_MS = 15000;
 const SEARCH_ANIMATION_SPEED = 1.75;
 const COMPLETE_ANIMATION_SPEED = 1.5;
 const Lottie = (
@@ -44,7 +45,6 @@ function LoadingPage() {
     loadingState?.recommendationSessionId ??
     recommendationRequest?.recommendationSessionId ??
     fallbackRecommendationSessionId;
-  const retryTimeoutRef = useRef<number | null>(null);
   const phaseTimeoutRef = useRef<number | null>(null);
   const searchLottieRef = useRef<LottieRefCurrentProps | null>(null);
   const completeLottieRef = useRef<LottieRefCurrentProps | null>(null);
@@ -63,6 +63,7 @@ function LoadingPage() {
 
   useEffect(() => {
     let isMounted = true;
+    let requestTimeoutId: number | null = null;
     searchStartedAtRef.current = Date.now();
     pendingResultRef.current = null;
 
@@ -122,10 +123,18 @@ function LoadingPage() {
           throw new Error("추천 조건이 없어 다시 선택이 필요합니다.");
         }
 
-        const result =
+        // Bound the wait even if the native HTTP bridge does not honor abort.
+        // A response arriving after the deadline cannot advance the loading phase.
+        const result = await Promise.race([
           source === "recommend" && recommendationRequest
-            ? await getCustomRecommendation(recommendationRequest)
-            : await drawRandomStation(recommendationSessionId);
+            ? getCustomRecommendation(recommendationRequest)
+            : drawRandomStation(recommendationSessionId),
+          new Promise<never>((_, reject) => {
+            requestTimeoutId = window.setTimeout(() => {
+              reject(new Error("뽑기 요청 시간이 초과되었습니다."));
+            }, RESULT_REQUEST_TIMEOUT_MS);
+          }),
+        ]);
         if (!isMounted) return;
 
         pendingResultRef.current = result;
@@ -133,15 +142,12 @@ function LoadingPage() {
       } catch (error) {
         if (!isMounted) return;
 
-        if (source === "random" && error instanceof RandomDrawNotFoundError) {
-          retryTimeoutRef.current = window.setTimeout(() => {
-            void requestResult();
-          }, 1000);
-          return;
-        }
-
         console.error(error);
         setLoadingError(true);
+      } finally {
+        if (requestTimeoutId !== null) {
+          window.clearTimeout(requestTimeoutId);
+        }
       }
     };
 
@@ -151,8 +157,8 @@ function LoadingPage() {
     return () => {
       isMounted = false;
 
-      if (retryTimeoutRef.current !== null) {
-        window.clearTimeout(retryTimeoutRef.current);
+      if (requestTimeoutId !== null) {
+        window.clearTimeout(requestTimeoutId);
       }
 
       if (phaseTimeoutRef.current !== null) {

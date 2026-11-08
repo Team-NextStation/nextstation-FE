@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import BaseLoading from "@/components/BaseLoading";
+import ErrorPage from "@/pages/ErrorPage";
 import Marker from "@/assets/marker.svg?react";
 import Phone from "@/assets/phone.svg?react";
 import Link from "@/assets/link.svg?react";
@@ -76,17 +77,11 @@ export default function DetailPage() {
     fetchPlaceCourses();
   }, [isLoggedIn, placeId]);
 
-  const fallback = (content: string) => (
-    <main className="flex h-dvh items-center justify-center bg-gray-10 text-body-01 text-gray-70">
-      {content}
-    </main>
-  );
-
   if (isPlaceLoading) return <BaseLoading />;
-  if (placeError) return fallback(placeError);
+  if (placeError) return <ErrorPage />;
   if (!place) return null;
   if (isLoggedIn && isCoursesLoading) return <BaseLoading />;
-  if (isLoggedIn && coursesError) return fallback(coursesError);
+  if (isLoggedIn && coursesError) return <ErrorPage />;
 
   const slideImages = place.images;
   const isImageEmpty = slideImages.length < 1;
