@@ -1,3 +1,6 @@
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 import Close from "@/assets/close.svg?react";
 import StationTitle from "@/components/StationTitle";
 import Download from "@/assets/download.svg?react";
@@ -39,6 +42,24 @@ export default function StampDetailModal({
     if (!targetRef.current) return;
 
     try {
+      // Android 앱인 경우 - 캐시에 파일로 저장한 뒤 공유 시트로 넘김
+      if (Capacitor.getPlatform() === "android") {
+        const dataUrl = await toPng(targetRef.current);
+        const base64 = dataUrl.split(",")[1];
+        const { uri } = await Filesystem.writeFile({
+          path: `stamp_${Date.now()}.png`,
+          data: base64,
+          directory: Directory.Cache,
+        });
+        await Share.share({
+          title: `${stamp.stationName} 스탬프`,
+          files: [uri],
+        });
+
+        return;
+      }
+
+      // iOS 또는 웹인 경우 - 기존 코드 그대로
       const blob = await toBlob(targetRef.current);
 
       if (blob) {
@@ -64,7 +85,10 @@ export default function StampDetailModal({
       link.href = dataUrl;
       link.click();
     } catch (e) {
-      if (e instanceof Error && e.name === "AbortError") {
+      if (
+        e instanceof Error &&
+        (e.name === "AbortError" || e.message === "Share canceled")
+      ) {
         return;
       }
       console.error(e);
