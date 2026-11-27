@@ -3,6 +3,7 @@ import BackIcon from "@/assets/back.svg?react";
 import PlacePreviewCard from "./components/PlacePreviewCard";
 import { useEffect, useState } from "react";
 import { getSearchPlaces, type Place } from "@/api/admin";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 const CATEGORY_STYLE_LABELS: Record<string, string> = {
   CULTURE: "문화공간",
@@ -19,6 +20,7 @@ interface SearchResultState {
 
 export default function SearchPage() {
   const navigate = useNavigate();
+  const goBack = useBackNavigation("/admin/place");
   const [query, setQuery] = useState("");
   // 마지막으로 응답이 온 검색어와 그 결과를 같이 저장
   const [searchResult, setSearchResult] = useState<SearchResultState | null>(
@@ -28,10 +30,6 @@ export default function SearchPage() {
 
   // 디바운스
   const [debouncedKeyword, setDebouncedKeyword] = useState("");
-
-  const handleBackClick = () => {
-    navigate(-1);
-  };
 
   // keyword가 변경되고 500ms 뒤에 debouncedKeyword를 갱신
   useEffect(() => {
@@ -90,7 +88,7 @@ export default function SearchPage() {
         <div className="flex items-center justify-start">
           <button
             type="button"
-            onClick={handleBackClick}
+            onClick={goBack}
             aria-label="뒤로가기"
             className="flex size-6 items-center justify-center outline-none"
           >

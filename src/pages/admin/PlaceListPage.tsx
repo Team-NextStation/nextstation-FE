@@ -15,6 +15,7 @@ import { getPlaces, type Place } from "@/api/admin";
 import { searchStations } from "@/api/stations";
 import { useInView } from "react-intersection-observer";
 import BaseLoading from "@/components/BaseLoading";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 type CategoryOption = {
   label: string;
@@ -59,6 +60,9 @@ export default function PlaceListPage() {
     stationId: number | null;
   } | null>(null);
   const [isStationMenuOpen, setIsStationMenuOpen] = useState(false);
+  const goBack = useBackNavigation("/admin", {
+    swipeEnabled: !isPlacesLoading && !placesError && !isStationMenuOpen,
+  });
 
   const [selectedCategoryOption, setSelectedCategoryOption] = useState<
     CategoryOption["value"] | null
@@ -192,7 +196,7 @@ export default function PlaceListPage() {
           <div className="flex items-center justify-start">
             <button
               type="button"
-              onClick={() => navigate("/admin")}
+              onClick={goBack}
               aria-label="뒤로가기"
               className="flex size-6 items-center justify-center outline-none"
             >

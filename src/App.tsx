@@ -12,6 +12,7 @@ import { LogDraftProvider } from "@/pages/course/contexts/LogDraftContext";
 import "react-toastify/dist/ReactToastify.css";
 import Toast from "@/pages/course/components/Toast";
 import AdminRoute from "./components/AdminRoute";
+import { useAppBackSwipe } from "@/hooks/useBackNavigation";
 
 const SplashPage = lazy(() => import("@/pages/SplashPage"));
 const MainPage = lazy(() => import("@/pages/MainPage"));
@@ -138,6 +139,7 @@ class RouteErrorBoundary extends Component<
 
 function AppRoutes() {
   const location = useLocation();
+  useAppBackSwipe();
 
   return (
     <RouteErrorBoundary location={location}>

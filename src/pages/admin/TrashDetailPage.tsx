@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import BackIcon from "@/assets/back.svg?react";
 import PlaceDetailContent from "./components/PlaceDetailContent";
@@ -11,15 +11,18 @@ import {
   type placeDetail,
 } from "@/api/admin";
 import BaseLoading from "@/components/BaseLoading";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 // 휴지통으로부터 진입
 
 export default function TrashDetailPage() {
-  const navigate = useNavigate();
   const { placeId } = useParams();
   const [place, setPlace] = useState<placeDetail>();
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const goBack = useBackNavigation("/admin/trash", {
+    swipeEnabled: !isLoading && Boolean(place) && !isModalOpen,
+  });
   const isRejected = place?.status === "REJECTED";
 
   useEffect(() => {
@@ -36,10 +39,6 @@ export default function TrashDetailPage() {
     fetchPlaceDetail();
   }, [placeId]);
 
-  const handleBackClick = () => {
-    navigate(-1);
-  };
-
   if (isLoading) return <BaseLoading />;
 
   if (!place) {
@@ -53,7 +52,7 @@ export default function TrashDetailPage() {
   const handlePending = async () => {
     // 복구하기 --> PENDING
     await patchPlaceStatus(Number(placeId), "PENDING");
-    navigate(-1);
+    goBack();
   };
 
   return (
@@ -74,7 +73,7 @@ export default function TrashDetailPage() {
       <header className="flex w-full h-6 items-center px-[15px] pb-2.5">
         <button
           type="button"
-          onClick={handleBackClick}
+          onClick={goBack}
           aria-label="뒤로가기"
           className="flex size-6 items-center justify-center outline-none"
         >

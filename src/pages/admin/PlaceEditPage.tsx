@@ -113,13 +113,16 @@ export default function PlaceEditPage() {
     selectedHastagOption2.value !== place.tags[1] ||
     newImages.length > 0;
 
+  const confirmLeave = () => setIsConfirmModalOpen(true);
+
   return (
     <main className="flex flex-col h-dvh gap-5  bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       <Header
         showClose
+        onSwipeBack={isDirty ? confirmLeave : undefined}
         onCloseClick={() => {
           if (isDirty) {
-            setIsConfirmModalOpen(true);
+            confirmLeave();
             return;
           }
           navigate(`/admin/place/${placeId}`);

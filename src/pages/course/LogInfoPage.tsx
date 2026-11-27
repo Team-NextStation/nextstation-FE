@@ -34,15 +34,17 @@ function LogInfoPage() {
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isLogConfirmOpen, setIsLogConfirmOpen] = useState(false);
+  const confirmLeave = () => setIsLogConfirmOpen(true);
 
   return (
     <main className="flex flex-col h-dvh overflow-y-auto bg-gray-10 items-center pt-[var(--safe-top)] pb-[calc(var(--safe-bottom)+140px)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* 수정사항이 있을경우 경고 모달이 떠야함 */}
       <Header
         showClose
+        onSwipeBack={isDirty ? confirmLeave : undefined}
         onCloseClick={() => {
           if (isDirty) {
-            setIsLogConfirmOpen(true);
+            confirmLeave();
             return;
           }
 

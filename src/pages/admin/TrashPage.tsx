@@ -109,7 +109,7 @@ export default function TrashPage() {
   return (
     <main className="flex flex-col h-dvh  bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* header */}
-      <Header showBack />
+      <Header showBack backFallbackPath="/admin" />
       <section className="flex justify-center pb-2.5">
         <div className="flex flex-col w-[360px]">
           <span className="text-title-01 font-semibold leading-[1.4] tracking-[-0.5px] text-gray-100">
