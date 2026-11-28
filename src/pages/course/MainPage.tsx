@@ -150,6 +150,7 @@ export default function MainPage() {
   return (
     <PullToRefresh
       onRefresh={fetchCourses}
+      fixedContent={<BottomNav mode="course" />}
       restorationPagination={{
         cursor: hasNext && !isLoadingMore ? nextCursor : null,
         loadMore: loadMoreCourses,
@@ -258,7 +259,6 @@ export default function MainPage() {
 
       <div ref={ref} className="h-1 w-full" />
 
-      <BottomNav mode="course" />
     </PullToRefresh>
   );
 }

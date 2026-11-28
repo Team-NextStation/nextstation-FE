@@ -86,6 +86,7 @@ export default function ExplorePage() {
   return (
     <PullToRefresh
       onRefresh={refreshExplore}
+      fixedContent={<BottomNav mode="course" activeTab="explore" />}
       className="flex h-dvh flex-col bg-gray-10 gap-3 pt-[calc(var(--safe-top)+12px)] pb-[var(--bottom-nav-offset)] text-gray-100 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
     >
       <header className="flex items-start justify-between px-[15px]">
@@ -236,7 +237,6 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      <BottomNav mode="course" activeTab="explore" />
     </PullToRefresh>
   );
 }

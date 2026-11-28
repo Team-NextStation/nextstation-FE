@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type ComponentPropsWithoutRef,
+  type ReactNode,
 } from "react";
 import { showToast } from "@/pages/course/components/ShowToast";
 import {
@@ -14,17 +15,20 @@ import {
 
 const PULL_THRESHOLD = 60;
 const BACK_SWIPE_EDGE = 24;
+const REFRESH_OFFSET = 54;
 
 interface PullToRefreshProps extends ComponentPropsWithoutRef<"main"> {
   onRefresh: () => Promise<void>;
   disabled?: boolean;
   restorationPagination?: ListRestorationPagination;
+  fixedContent?: ReactNode;
 }
 
 export default function PullToRefresh({
   onRefresh,
   disabled = false,
   restorationPagination,
+  fixedContent,
   children,
   className,
   ...props
@@ -115,13 +119,16 @@ export default function PullToRefresh({
     };
   }, []);
 
+  const offset = refreshing ? REFRESH_OFFSET : distance;
+  const isDragging = distance > 0 && !refreshing;
+
   return (
     <main ref={setScrollElement} className={`overscroll-y-contain ${className ?? ""}`} {...props}>
-      {(distance > 0 || refreshing) && (
+      {offset > 0 && (
         <div
           className="pointer-events-none fixed left-1/2 top-[var(--safe-top)] z-40 grid size-9 -translate-x-1/2 place-items-center rounded-full bg-white text-primary-90 shadow-md"
           style={{
-            top: `calc(var(--safe-top) + ${refreshing ? 14 : Math.max(distance - 45, 0)}px)`,
+            top: `calc(var(--safe-top) + ${Math.max(0, (offset - 36) / 2 + 6)}px)`,
             opacity: refreshing ? 1 : Math.min(distance / PULL_THRESHOLD, 1),
           }}
         >
@@ -133,7 +140,13 @@ export default function PullToRefresh({
         </div>
       )}
       <span className="sr-only" role="status">{refreshing ? "새로고침 중" : ""}</span>
-      {children}
+      <div
+        className={`flex min-w-0 shrink-0 flex-col [gap:inherit] ${isDragging ? "" : "motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out"}`}
+        style={{ transform: offset > 0 ? `translate3d(0, ${offset}px, 0)` : undefined }}
+      >
+        {children}
+      </div>
+      {fixedContent}
     </main>
   );
 }

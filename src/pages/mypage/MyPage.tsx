@@ -220,6 +220,7 @@ export default function MyPage() {
   return (
     <PullToRefresh
       onRefresh={fetchMyJournals}
+      fixedContent={<BottomNav mode="course" activeTab="profile" />}
       restorationPagination={{
         cursor: !isStampMode && hasNext && !isLoadingMore ? nextCursor : null,
         loadMore: loadMoreJournals,
@@ -406,7 +407,6 @@ export default function MyPage() {
       </section>
       <div ref={ref} className="h-1 w-full"></div>
 
-      <BottomNav mode="course" activeTab="profile" />
     </PullToRefresh>
   );
 }
