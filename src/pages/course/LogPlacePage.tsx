@@ -27,7 +27,7 @@ function LogPlacePage() {
             return;
           }
 
-          navigate("/course");
+          goBack();
         }}
       />
       {isLogConfirmOpen && (

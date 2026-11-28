@@ -4,13 +4,14 @@ import LineBadge from "@/components/LineBadge";
 import EditDropdown from "./components/EditDropdown";
 import { useEffect, useState } from "react";
 import CTAButton from "@/components/CTAButton";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import PlacePhotoUploader from "./components/PlacePhotoUploader";
 import ConfirmModal from "@/components/ConfirmModal";
 import { CATEGORY_LABELS } from "./data/mockPlaces";
 import type { placeDetail } from "@/api/admin";
 import { getPlaceDetail, patchPlaceInfo } from "@/api/admin";
 import BaseLoading from "@/components/BaseLoading";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 type HastagOption = {
   label: string;
@@ -39,8 +40,10 @@ const hashtagSortOptions: HastagOption[] = [
 ];
 
 export default function PlaceEditPage() {
-  const navigate = useNavigate();
   const { placeId } = useParams();
+  const goBack = useBackNavigation(`/admin/place/${placeId}`, {
+    registerSwipe: false,
+  });
   const [place, setPlace] = useState<placeDetail>();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -88,20 +91,14 @@ export default function PlaceEditPage() {
     );
   }
 
-  const handleSave = async (): Promise<{
-    placeId: number;
-  } | null> => {
-    if (!place) return null;
-
-    const updated = await patchPlaceInfo(
+  const handleSave = async () => {
+    await patchPlaceInfo(
       place.placeId,
       [selectedHastagOption1.value, selectedHastagOption2.value],
       description,
       newImages,
     );
-    setDescription(updated.description);
-
-    return { placeId: place.placeId };
+    goBack();
   };
 
   // kakaoPlaceUrl 끝의 숫자가 kakaoPlaceId (placeDetail 응답엔 별도 필드로 안 내려옴)
@@ -125,7 +122,7 @@ export default function PlaceEditPage() {
             confirmLeave();
             return;
           }
-          navigate(`/admin/place/${placeId}`);
+          goBack();
         }}
       />
 
@@ -135,7 +132,7 @@ export default function PlaceEditPage() {
             "해당 내용은 저장되지 않습니다.\n저장하지 않고 나가시겠습니까?"
           }
           onClose={() => setIsConfirmModalOpen(false)}
-          onConfirm={() => navigate(`/admin/place/${placeId}`)}
+          onConfirm={goBack}
         />
       )}
 
@@ -238,10 +235,7 @@ export default function PlaceEditPage() {
         <CTAButton
           onClick={async () => {
             try {
-              const result = await handleSave();
-              if (result) {
-                navigate(`/admin/place/${result.placeId}`, { replace: true });
-              }
+              await handleSave();
             } catch (e) {
               console.error(e);
             }

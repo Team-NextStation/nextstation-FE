@@ -35,6 +35,7 @@ import { buildSharedCourseUrl } from "@/utils/courseShare";
 import share from "@/utils/share";
 import { showToast } from "./components/ShowToast";
 import { getAccessToken } from "@/api/auth";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 interface DraftCourseState {
   course: RandomCourseResponse;
@@ -57,7 +58,7 @@ interface VerifySyncedState {
   course: VerifyCourse;
   places: Place[];
   courseName: string;
-  hasUnSavedChanged: boolean;
+  hasUnsavedChanges: boolean;
 }
 
 interface VerifyLocationState extends Partial<DraftCourseState> {
@@ -96,6 +97,9 @@ export default function VerifyPage() {
   const synced = locationState?.synced; // 장소 상세 등을 다녀온 뒤 복원할 최신 스냅샷
   const draft = !synced ? (locationState as DraftCourseState | null) : null; // Result Page에서 넘겨주는 랜덤 뽑기 결과
   const isSharedView = Boolean(shareToken);
+  const goBack = useBackNavigation(isSharedView ? "/" : "/course", {
+    registerSwipe: false,
+  });
   const [course, setCourse] = useState<VerifyCourse | null>(() => {
     if (synced) return synced.course;
 
@@ -135,7 +139,7 @@ export default function VerifyPage() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isMapOpen, setIsMapOpen] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(
-    () => synced?.hasUnSavedChanged ?? false,
+    () => synced?.hasUnsavedChanges ?? false,
   ); // 순서/이름을 바꾸고 아직 저장 안 한 상태인지
   const [searchParams] = useSearchParams(); // 어떤 페이지로부터 진입했는지를 알기 위함
   const from = searchParams.get("from"); // draw (랜덤 뽑기) | recommend (맞춤 추천)
@@ -382,8 +386,9 @@ export default function VerifyPage() {
   };
 
   const toggleModal = () => setIsModalOpen((prev) => !prev);
-  const handleConfirm = () => {
-    navigate("/");
+  const leaveCourse = () => {
+    isLeavingRef.current = true;
+    goBack();
   };
 
   if (isPlacesLoading) return <BaseLoading />;
@@ -417,28 +422,22 @@ export default function VerifyPage() {
     }
   };
 
+  const shouldWarnOnBack = !isSharedView && hasUnsavedChanges;
+  const handleBackClick = () => {
+    if (shouldWarnOnBack) {
+      setIsModalOpen(true);
+      return;
+    }
+
+    leaveCourse();
+  };
+
   const handleCloseClick = () => {
-    if (isSharedView) {
-      navigate("/");
+    if (isRandomDraft || isRecommendDraft || isCopyPreviewDraft) {
+      setIsModalOpen(true);
       return;
     }
-
-    if (
-      !isRandomDraft &&
-      !isRecommendDraft &&
-      !isCopyPreviewDraft &&
-      !hasUnsavedChanges
-    ) {
-      // 내가 만든 코스 목록에서 진입하는 경우, close --> 대문 페이지로 이동
-      navigate("/course");
-      return;
-    }
-
-    if (course.courseId !== null && !hasUnsavedChanges) {
-      navigate("/");
-      return;
-    }
-    toggleModal();
+    handleBackClick();
   };
 
   const handleCourseNameChange = (value: string) => {
@@ -456,7 +455,13 @@ export default function VerifyPage() {
 
   return (
     <main className="flex flex-col h-dvh  bg-gray-10 gap-8 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-      <Header showBack showClose onCloseClick={handleCloseClick} />
+      <Header
+        showBack
+        showClose
+        onBackClick={handleBackClick}
+        onSwipeBack={shouldWarnOnBack ? handleBackClick : undefined}
+        onCloseClick={handleCloseClick}
+      />
 
       {/* 경고 모달 */}
       {isModalOpen && (
@@ -465,7 +470,7 @@ export default function VerifyPage() {
             "해당 코스는 저장되지 않습니다.\n저장하지 않고 나가시겠습니까?"
           }
           onClose={toggleModal}
-          onConfirm={handleConfirm}
+          onConfirm={leaveCourse}
         />
       )}
 

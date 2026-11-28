@@ -87,7 +87,7 @@ function LogVisibilityPage() {
             return;
           }
 
-          navigate("/course");
+          goBack();
         }}
       />
       {isLogConfirmOpen && (

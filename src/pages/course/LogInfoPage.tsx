@@ -50,7 +50,7 @@ function LogInfoPage() {
             return;
           }
 
-          navigate("/course");
+          goBack();
         }}
       />
       {isLogConfirmOpen && (
