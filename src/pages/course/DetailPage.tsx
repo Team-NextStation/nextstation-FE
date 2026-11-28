@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import BackIcon from "@/assets/back.svg?react";
 import HeartIcon from "@/assets/heart.svg?react";
 import HeartFilledIcon from "@/assets/explore/heart-filled.svg?react";
@@ -113,6 +113,7 @@ function mapJournalToCourse(journal: JournalDetail): CourseDetailData {
 
 export default function DetailPage() {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const { courseId: journalIdParam } = useParams();
   const journalId = Number(journalIdParam);
   const hasValidJournalId = isPositiveId(journalId);
@@ -603,13 +604,17 @@ export default function DetailPage() {
               <button
                 type="button"
                 className="flex h-[73px] w-full items-center gap-[14px] rounded-[20px] bg-secondary-10 px-[15px] py-3 text-left"
-                onClick={() =>
-                  !isLoggedIn
-                    ? setIsLoginModalOpen(true)
-                    : course.isMine
-                      ? navigate("/mypage", { state: { tab: "journal" } })
-                      : navigate(`/profile/${course.writerId}`)
-                }
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    setIsLoginModalOpen(true);
+                  } else if (!course.isMine) {
+                    navigate(`/profile/${course.writerId}`);
+                  } else if (state?.fromMyPage) {
+                    navigate(-1);
+                  } else {
+                    navigate("/mypage", { state: { tab: "journal" } });
+                  }
+                }}
                 aria-label={`${course.writerName} 프로필 보기`}
               >
                 {authorProfileContent}

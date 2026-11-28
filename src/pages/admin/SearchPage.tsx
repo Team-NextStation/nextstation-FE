@@ -97,7 +97,7 @@ export default function SearchPage() {
         </div>
 
         <input
-          className="flex-1 px-4 py-3 rounded-lg border border-gray-30 bg-gray-20 text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-90 outline-none caret-primary-50"
+          className="flex-1 px-4 py-3 rounded-lg border border-gray-30 bg-gray-20 text-subtitle leading-[1.4] tracking-[-0.35px] text-gray-90 outline-none caret-primary-50"
           placeholder="장소명 검색"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

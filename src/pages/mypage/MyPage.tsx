@@ -357,7 +357,11 @@ export default function MyPage() {
               </button>
               {journals.map((journal) => (
                 <button
-                  onClick={() => navigate(`/course/${journal.journalId}`)}
+                  onClick={() =>
+                    navigate(`/course/${journal.journalId}`, {
+                      state: { fromMyPage: true },
+                    })
+                  }
                 >
                   <JournalPreviewCard
                     key={journal.journalId}

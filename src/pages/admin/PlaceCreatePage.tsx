@@ -393,7 +393,7 @@ export default function PlaceCreatePage() {
             <textarea
               placeholder="장소에 대한 한 줄 소개를 작성해주세요."
               value={description}
-              className="p-4 rounded-lg bg-white outline-none min-h-[90px] resize-none caret-primary-50"
+              className="p-4 rounded-lg bg-white outline-none min-h-[90px] resize-none text-subtitle caret-primary-50"
               onChange={(e) => setDescription(e.target.value)}
             />
           </section>

@@ -127,7 +127,7 @@ export default function JournalEditPlaceItem({
           onChange={(event) => onChangeDescription(event.target.value)}
           rows={3}
           placeholder="이 장소는 어땠나요?"
-          className="mt-2 min-h-0 flex-1 w-full resize-none overflow-y-auto rounded-md border border-gray-40 bg-white p-2 text-body-02 leading-[1.4] tracking-[-0.025em] text-gray-80 caret-primary-50 outline-none placeholder:text-gray-50"
+          className="mt-2 min-h-0 flex-1 w-full resize-none overflow-y-auto rounded-md border border-gray-40 bg-white p-2 text-subtitle leading-[1.4] tracking-[-0.025em] text-gray-80 caret-primary-50 outline-none placeholder:text-gray-50"
         />
       </div>
 

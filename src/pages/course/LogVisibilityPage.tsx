@@ -25,7 +25,7 @@ function LogVisibilityPage() {
   const goBack = useBackNavigation("/course", { registerSwipe: false });
   const [isLogConfirmOpen, setIsLogConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { draft, setVisibility, isDirty } = useLogDraft();
+  const { draft, discardChanges, setVisibility, isDirty } = useLogDraft();
   const stationName = draft.stationName ?? "환승역";
 
   const handleSave = async () => {
@@ -96,7 +96,10 @@ function LogVisibilityPage() {
             "해당 기록은 저장되지 않습니다.\n저장하지 않고 나가시겠습니까?"
           }
           onClose={() => setIsLogConfirmOpen(false)}
-          onConfirm={goBack}
+          onConfirm={() => {
+            discardChanges();
+            goBack();
+          }}
         />
       )}
 

@@ -19,6 +19,7 @@ function LogInfoPage() {
   const { courseId } = useParams();
   const {
     draft,
+    discardChanges,
     setLogName,
     setSelectedDate,
     setSelectedTime,
@@ -59,7 +60,10 @@ function LogInfoPage() {
             "해당 기록은 저장되지 않았습니다.\n저장하지 않고 나가시겠습니까?"
           }
           onClose={() => setIsLogConfirmOpen(false)}
-          onConfirm={goBack}
+          onConfirm={() => {
+            discardChanges();
+            goBack();
+          }}
         />
       )}
       {/* 코스 제목 */}
@@ -156,7 +160,7 @@ function LogInfoPage() {
               value={draft.review}
               onChange={(e) => setReview(e.target.value)}
               placeholder={`오늘 ${stationName} 여행은 어땠나요?`}
-              className="w-full h-full resize-none bg-transparent caret-primary-50 text-body-01 text-gray-100 placeholder:text-gray-50 focus:outline-none"
+              className="w-full h-full resize-none bg-transparent caret-primary-50 text-subtitle text-gray-100 placeholder:text-gray-50 focus:outline-none"
             />
           </div>
         </div>
