@@ -31,9 +31,15 @@ export default function MyPage() {
   const [myProfile, setMyProfile] = useState<MemberProfile | null>(null);
   const [isMyProfileLoading, setIsMyProfileLoading] = useState(true);
   const [myProfileError, setMyProfileError] = useState<string | null>(null);
-  const [isStampMode, setIsStampMode] = useState(
-    (location.state as { tab?: string } | null)?.tab !== "journal",
-  );
+  const isStampMode = location.state?.tab !== "journal";
+  const selectTab = (tab: "stamp" | "journal") => {
+    if ((tab === "stamp") === isStampMode) return;
+
+    navigate(location, {
+      replace: true,
+      state: { ...location.state, tab },
+    });
+  };
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [journals, setJournals] = useState<Journal[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -283,7 +289,7 @@ export default function MyPage() {
       <section className="flex justify-center">
         <div className="flex relative items-center w-[358px] rounded-[36px] bg-gray-30 p-1">
           <button
-            onClick={() => setIsStampMode(true)}
+            onClick={() => selectTab("stamp")}
             className={
               "relative z-10 flex-1 rounded-[28px] text-center py-2 outline-none"
             }
@@ -307,7 +313,7 @@ export default function MyPage() {
           </button>
 
           <button
-            onClick={() => setIsStampMode(false)}
+            onClick={() => selectTab("journal")}
             className={
               "relative z-10 flex-1 rounded-[28px] text-center py-2 outline-none"
             }
@@ -351,11 +357,7 @@ export default function MyPage() {
               </button>
               {journals.map((journal) => (
                 <button
-                  onClick={() =>
-                    navigate(`/course/${journal.journalId}`, {
-                      state: { from: "mypage-journal" },
-                    })
-                  }
+                  onClick={() => navigate(`/course/${journal.journalId}`)}
                 >
                   <JournalPreviewCard
                     key={journal.journalId}

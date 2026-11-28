@@ -1,12 +1,13 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import type { RecommendationTravelTime } from "@/api/recommendation";
+import { useRef, useState } from "react";
+import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import type { Station } from "@/api/stations";
 import Header from "@/components/Header";
 import CTAButton from "@/components/CTAButton";
 import SearchBar from "./components/SearchBar";
 import ChoiceChip from "@/pages/draw/components/ChoiceChip";
 import RecentStationChip from "./components/RecentStationChip";
+import type { RecommendationStepsContext } from "./RecommendationSteps";
+import { captureBackPreview } from "@/hooks/useBackSwipe";
 
 const timeOptions = ["30분 이내", "1시간 이내", "상관 없음"] as const;
 
@@ -27,16 +28,13 @@ type ConditionPageState = {
   selectedStation?: Station | null;
   selectedTime?: string | null;
   selectedCompanion?: string | null;
-  selectedTags?: string[];
-  departureStationId?: number;
-  departureStationName?: string;
-  travelTime?: RecommendationTravelTime;
-  companion?: string | null;
 };
 
 function ConditionPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const isCapturingPreview = useRef(false);
+  const { selectedTags } = useOutletContext<RecommendationStepsContext>();
   const conditionState = location.state as ConditionPageState | null;
   const initialSelectedStation = conditionState?.selectedStation ?? null;
   const [query, setQuery] = useState(initialSelectedStation?.name ?? '');
@@ -98,6 +96,31 @@ function ConditionPage() {
   selectedStation !== null &&
   selectedTime !== null &&
   selectedCompanion !== null;
+
+  const handleNext = async () => {
+    if (!selectedStation || !selectedTime || !selectedCompanion || isCapturingPreview.current) return;
+
+    const historyKey = window.history.state?.key;
+    const capture = captureBackPreview(location.key);
+    if (capture) {
+      isCapturingPreview.current = true;
+      await capture;
+      isCapturingPreview.current = false;
+      if (window.history.state?.key !== historyKey) return;
+    }
+
+    const state = { selectedStation, selectedTime, selectedCompanion, selectedTags };
+    navigate(location, { replace: true, state });
+    navigate("/draw/preference", {
+      state: {
+        ...state,
+        departureStationId: selectedStation.id,
+        departureStationName: selectedStation.name,
+        travelTime: mapTravelTime(selectedTime),
+        companion: selectedCompanion,
+      },
+    });
+  };
 
   return (
     <main className="flex flex-col h-dvh overflow-hidden bg-white items-center pt-[var(--safe-top)]">
@@ -186,18 +209,7 @@ function ConditionPage() {
         <section className='flex w-full items-center justify-center'>
           <CTAButton 
             disabled={!isFormValid}
-            onClick={() => navigate('/draw/preference', {
-              state: {
-                selectedStation,
-                selectedTime,
-                selectedCompanion,
-                selectedTags: conditionState?.selectedTags ?? [],
-                departureStationId: selectedStation!.id,
-                departureStationName: selectedStation!.name,
-                travelTime: mapTravelTime(selectedTime!),
-                companion: selectedCompanion, // UI용만 보관
-              },
-            })}
+            onClick={handleNext}
           >
             다음
           </CTAButton>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { Navigate, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import type {
   RecommendationTravelStyle,
   RecommendationTravelTime,
@@ -8,6 +8,7 @@ import type { Station } from "@/api/stations";
 import Header from "@/components/Header";
 import CTAButton from "@/components/CTAButton";
 import HashtagChip from "@/pages/draw/components/HashtagChip";
+import type { RecommendationStepsContext } from "./RecommendationSteps";
 
 
 const hashtagRows = [
@@ -42,9 +43,8 @@ function PreferencePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const condition = location.state as PreferencePageState | null;
-  const [selectedTags, setSelectedTags] = useState<string[]>(
-    condition?.selectedTags ?? [],
-  );
+  const { selectedTags, setSelectedTags } =
+    useOutletContext<RecommendationStepsContext>();
 
   useEffect(() => {
     if (!condition) return;
@@ -84,21 +84,8 @@ function PreferencePage() {
   const isFormValid = selectedTags.length > 0;
 
   if (!condition) {
-    navigate("/draw/condition", { replace: true });
-    return null;
+    return <Navigate to="/draw/condition" replace />;
   }
-
-  const handleBack = () => {
-    navigate("/draw/condition", {
-      replace: true,
-      state: {
-        selectedStation: condition.selectedStation ?? null,
-        selectedTime: condition.selectedTime ?? null,
-        selectedCompanion: condition.selectedCompanion ?? null,
-        selectedTags,
-      },
-    });
-  };
 
   const mappedTravelStyles = selectedTags.map((tag) => {
     const mapped = travelStyleMap[tag];
@@ -112,7 +99,7 @@ function PreferencePage() {
 
   return (
     <main className="flex flex-col h-dvh overflow-hidden bg-white items-center pt-[var(--safe-top)]">
-      <Header showBack onBackClick={handleBack} />
+      <Header showBack backFallbackPath="/draw/condition" />
 
       <section className="flex h-full flex-col items-center justify-between pt-4 pb-[calc(var(--safe-bottom)+10px)]">
         <div className="flex flex-col items-center gap-[50px]">

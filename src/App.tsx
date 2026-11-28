@@ -13,6 +13,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Toast from "@/pages/course/components/Toast";
 import AdminRoute from "./components/AdminRoute";
 import { useAppBackSwipe } from "@/hooks/useBackNavigation";
+import RecommendationSteps from "@/pages/draw/RecommendationSteps";
 
 const SplashPage = lazy(() => import("@/pages/SplashPage"));
 const MainPage = lazy(() => import("@/pages/MainPage"));
@@ -164,8 +165,10 @@ function AppRoutes() {
           <Route path="/draw/loading" element={<LoadingPage />} />
           <Route path="/draw/result" element={<ResultPage />} />
           <Route path="/draw/recommend" element={<RecommendPage />} />
-          <Route path="/draw/condition" element={<ConditionPage />} />
-          <Route path="/draw/preference" element={<PreferencePage />} />
+          <Route element={<RecommendationSteps />}>
+            <Route path="/draw/condition" element={<ConditionPage />} />
+            <Route path="/draw/preference" element={<PreferencePage />} />
+          </Route>
 
           {/* course */}
           <Route path="/course" element={<CourseMainPage />} />

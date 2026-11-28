@@ -1,20 +1,48 @@
 import { Capacitor, registerPlugin } from "@capacitor/core";
-import { useEffect, useEffectEvent } from "react";
+import { useEffect, useEffectEvent, useId } from "react";
+import { useLocation } from "react-router-dom";
 
 const IOS_BACK_SWIPE_EVENT = "nextstation:ios-back-swipe";
 const SWIPE_BACK_EVENT = "nextstation:swipe-back";
 
 const BackSwipe = registerPlugin<{
   routeChanged(entry: { index: number; key: string }): Promise<void>;
+  captureBackPreview(entry: { key: string }): Promise<void>;
+  setPreviewBlocked(entry: { key: string; id: string; blocked: boolean }): Promise<void>;
 }>("BackSwipe");
+
+export function captureBackPreview(key: string) {
+  if (Capacitor.getPlatform() !== "ios" || !Capacitor.isPluginAvailable("BackSwipe")) return;
+
+  return BackSwipe.captureBackPreview({ key }).catch(console.error);
+}
 
 function isDialogOpen() {
   return document.querySelector('[role="dialog"], [aria-modal="true"]') !== null;
 }
 
-export function useSwipeBackOverride(onBack: (() => void) | null | undefined) {
+export function useSwipeBackOverride(
+  onBack: (() => void) | null | undefined,
+  blockPreview = false,
+) {
+  const { key } = useLocation();
+  const id = useId();
   const isRegistered = onBack !== undefined;
+  const shouldBlockPreview = onBack === null || blockPreview;
   const triggerBack = useEffectEvent(() => onBack?.());
+
+  useEffect(() => {
+    if (
+      !shouldBlockPreview ||
+      Capacitor.getPlatform() !== "ios" ||
+      !Capacitor.isPluginAvailable("BackSwipe")
+    ) return;
+
+    void BackSwipe.setPreviewBlocked({ key, id, blocked: true }).catch(console.error);
+    return () => {
+      void BackSwipe.setPreviewBlocked({ key, id, blocked: false }).catch(console.error);
+    };
+  }, [id, key, shouldBlockPreview]);
 
   useEffect(() => {
     if (!isRegistered || Capacitor.getPlatform() !== "ios") return;

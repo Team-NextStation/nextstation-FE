@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import BackIcon from "@/assets/back.svg?react";
 import HeartIcon from "@/assets/heart.svg?react";
 import HeartFilledIcon from "@/assets/explore/heart-filled.svg?react";
@@ -113,7 +113,6 @@ function mapJournalToCourse(journal: JournalDetail): CourseDetailData {
 
 export default function DetailPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { courseId: journalIdParam } = useParams();
   const journalId = Number(journalIdParam);
   const hasValidJournalId = isPositiveId(journalId);
@@ -250,32 +249,20 @@ export default function DetailPage() {
         );
       }));
 
-  // 여행일지 목록에서 들어온 경우에 뒤로 가면 여행일지 탭이 보이도록 설정
-  const navigateBack = () => {
-    if (
-      (location.state as { from?: string } | null)?.from === "mypage-journal"
-    ) {
-      navigate("/mypage", { state: { tab: "journal" } });
-      return;
-    }
-
-    // 아닌 경우 그냥 뒤로 가기
-    navigate(-1);
-  };
-
   // 뒤로 가기 버튼 클릭 시 실행
   const handleBack = () => {
     if (hasUnsavedJournalChanges) {
       setIsLeaveConfirmModalOpen(true);
       return;
     }
-    navigateBack();
+    navigate(-1);
   };
 
   useSwipeBackOverride(
     isDeleteModalOpen || isLeaveConfirmModalOpen || isReportModalOpen || isLoginModalOpen
       ? null
       : handleBack,
+    hasUnsavedJournalChanges,
   );
 
   if (!hasValidJournalId || isLoading || !course) {
@@ -482,7 +469,7 @@ export default function DetailPage() {
           onConfirm={() => {
             setIsLeaveConfirmModalOpen(false);
             setIsEditMode(false);
-            navigateBack();
+            navigate(-1);
           }}
         />
       )}

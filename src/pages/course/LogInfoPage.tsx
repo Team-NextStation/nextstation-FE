@@ -9,11 +9,13 @@ import CalendarIcon from "@/assets/calendar.svg?react";
 import ConfirmModal from "@/components/ConfirmModal";
 import NameEditInput from "./components/NameEditInput";
 import { useLogDraft } from "./contexts/LogDraftContext";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 const timeOptions = ["3~4시간", "반나절", "하루종일"];
 
 function LogInfoPage() {
   const navigate = useNavigate();
+  const goBack = useBackNavigation("/course", { registerSwipe: false });
   const { courseId } = useParams();
   const {
     draft,
@@ -57,7 +59,7 @@ function LogInfoPage() {
             "해당 기록은 저장되지 않았습니다.\n저장하지 않고 나가시겠습니까?"
           }
           onClose={() => setIsLogConfirmOpen(false)}
-          onConfirm={() => navigate(`/course`)}
+          onConfirm={goBack}
         />
       )}
       {/* 코스 제목 */}

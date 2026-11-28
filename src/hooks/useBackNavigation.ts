@@ -43,6 +43,9 @@ export function useBackNavigation(
   });
 
   const swipeHandler = swipeEnabled ? (onSwipeBack ?? goBack) : null;
-  useSwipeBackOverride(registerSwipe ? swipeHandler : undefined);
+  useSwipeBackOverride(
+    registerSwipe ? swipeHandler : undefined,
+    registerSwipe && Boolean(onSwipeBack),
+  );
   return goBack;
 }
