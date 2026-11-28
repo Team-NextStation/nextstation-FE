@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useListHistoryValue, useListScrollRestoration } from "@/hooks/useListScrollRestoration";
 import { useInView } from "react-intersection-observer";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
@@ -29,7 +30,8 @@ export default function ConceptDetailPage() {
   const navigatedTour = navigationState?.conceptTour;
   const initialTour =
     navigatedTour?.conceptTourId === numericConceptId ? navigatedTour : null;
-  const [sort, setSort] = useState<ExploreSortOption>("인기순");
+  const [sort, setSort] = useListHistoryValue<ExploreSortOption>("sort", "인기순");
+  const restoreScroll = useListScrollRestoration();
   const [tour, setTour] = useState<ConceptTour | null>(initialTour);
   const [courses, setCourses] = useState<ExploreCourse[] | null>(null);
   const [isLoading, setIsLoading] = useState(!initialTour);
@@ -40,7 +42,6 @@ export default function ConceptDetailPage() {
   const { ref: loadMoreRef, inView } = useInView({ rootMargin: "120px" });
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     let isActive = true;
 
     void getConceptTours()
@@ -131,7 +132,7 @@ export default function ConceptDetailPage() {
   }
 
   return (
-    <main className="flex h-dvh flex-col bg-gray-10 text-gray-100 pt-[calc(var(--safe-top)+12px)] text-gray-100 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <main ref={restoreScroll} className="flex h-dvh flex-col bg-gray-10 text-gray-100 pt-[calc(var(--safe-top)+12px)] text-gray-100 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       <Header showBack />
 
       {!hasError && tour && (

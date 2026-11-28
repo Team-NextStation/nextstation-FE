@@ -37,7 +37,7 @@ export default function ExploreSearchBar({
         <SearchIcon className="size-5 shrink-0" aria-hidden="true" />
       )}
       <input
-        className="min-w-0 flex-1 border-0 bg-transparent text-body-01 text-gray-90 outline-none"
+        className="min-w-0 flex-1 border-0 bg-transparent text-subtitle text-gray-90 outline-none"
         aria-label={ariaLabel}
         defaultValue={defaultValue}
         name="query"

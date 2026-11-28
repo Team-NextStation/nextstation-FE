@@ -73,7 +73,7 @@ export default function JournalEditForm({
           type="text"
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
-          className="text-title-01 font-semibold leading-[1.4] tracking-[-0.5px] text-gray-100 caret-primary-50 outline-none text-center px-[15px] py-2"
+          className="text-subtitle font-semibold leading-[1.4] tracking-[-0.5px] text-gray-100 caret-primary-50 outline-none text-center px-[15px] py-2"
         />
 
         {/* time */}
@@ -170,7 +170,7 @@ export default function JournalEditForm({
           value={review}
           onChange={(e) => onReviewChange(e.target.value)}
           placeholder="여행 후기를 남겨보세요."
-          className="w-full resize-none rounded-md border border-gray-40 p-3 text-body-01 leading-[1.4] tracking-[-0.025em] text-gray-100 caret-primary-50 outline-none placeholder:text-gray-50"
+          className="w-full resize-none rounded-md border border-gray-40 p-3 text-subtitle leading-[1.4] tracking-[-0.025em] text-gray-100 caret-primary-50 outline-none placeholder:text-gray-50"
         />
       </section>
 

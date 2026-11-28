@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import CTAButton from "@/components/CTAButton";
 import Header from "@/components/Header";
 import ProfileImageUploader from "./components/ProfileImageUploader";
@@ -38,7 +38,7 @@ const validateNickname = (value: string) => {
 };
 
 export default function ProfileEditPage() {
-  const navigate = useNavigate();
+  const goBack = useBackNavigation("/mypage", { registerSwipe: false });
   const [memberId, setMemberId] = useState<number | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [nickname, setNickname] = useState("");
@@ -88,7 +88,7 @@ export default function ProfileEditPage() {
     }
 
     if (Object.keys(updates).length === 0) {
-      navigate("/mypage");
+      goBack();
       return;
     }
 
@@ -103,7 +103,7 @@ export default function ProfileEditPage() {
         }
       }
 
-      navigate("/mypage");
+      goBack();
     } catch (e) {
       console.error(e);
       if (e instanceof MemberApiError && e.status === 409) {
@@ -118,7 +118,7 @@ export default function ProfileEditPage() {
 
   return (
     <main className="relative flex flex-col h-dvh overflow-hidden bg-white pt-[calc(var(--safe-top)+12px)]">
-      <Header showBack />
+      <Header showBack backFallbackPath="/mypage" />
 
       <section className="flex justify-center pb-12">
         <div className="flex w-[360px]">

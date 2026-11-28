@@ -2,11 +2,13 @@ import Heart from "@/assets/heart.svg?react";
 import BaseLoading from "@/components/BaseLoading";
 import CourseEmpty from "@/assets/course-empty.svg?react";
 import SavedCourseCard from "./components/SavedCourseCard";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import CompleteConfirmModal from "./components/CompleteConfirmModal";
 import StationCategory from "./components/StationCategory";
 import ConfirmModal from "@/components/ConfirmModal";
 import BottomNav from "@/components/BottomNav";
+import PullToRefresh from "@/components/PullToRefresh";
+import { useListHistoryValue } from "@/hooks/useListScrollRestoration";
 import {
   deleteSavedCourses,
   getSavedCourses,
@@ -28,33 +30,37 @@ export default function MainPage() {
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedLine, setSelectedLine] = useState("전체");
-  const [selectedStation, setSelectedStation] = useState("전체");
+  const [selectedLine, setSelectedLine] = useListHistoryValue("line", "전체");
+  const [selectedStation, setSelectedStation] = useListHistoryValue("station", "전체");
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const listRequestPending = useRef(false);
 
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        setIsCoursesLoading(true);
-        const data = await getSavedCourses();
-        setCourses(data.courses ?? []);
-        setNextCursor(data.nextCursor);
-        setHasNext(data.hasNext);
-      } catch (e) {
-        console.error(e);
-        setInitialLoadError("내가 만든 코스 목록을 불러오지 못했습니다.");
-      } finally {
-        setIsCoursesLoading(false);
-      }
-    };
-
-    void fetchCourses();
+  const fetchCourses = useCallback(async () => {
+    if (listRequestPending.current) return;
+    listRequestPending.current = true;
+    try {
+      const data = await getSavedCourses();
+      setCourses(data.courses ?? []);
+      setNextCursor(data.nextCursor);
+      setHasNext(data.hasNext);
+      setInitialLoadError(null);
+    } finally {
+      listRequestPending.current = false;
+    }
   }, []);
 
-  const loadMoreCourses = async () => {
-    if (!nextCursor) return;
+  useEffect(() => {
+    void fetchCourses().catch((error) => {
+      console.error(error);
+      setInitialLoadError("내가 만든 코스 목록을 불러오지 못했습니다.");
+    }).finally(() => setIsCoursesLoading(false));
+  }, [fetchCourses]);
 
+  const loadMoreCourses = async () => {
+    if (!nextCursor || listRequestPending.current) return;
+
+    listRequestPending.current = true;
     try {
       setIsLoadingMore(true);
       const data = await getSavedCourses(nextCursor);
@@ -65,6 +71,7 @@ export default function MainPage() {
       console.error(e);
       showToast({ message: "코스 목록을 더 불러오지 못했습니다." });
     } finally {
+      listRequestPending.current = false;
       setIsLoadingMore(false);
     }
   };
@@ -80,7 +87,6 @@ export default function MainPage() {
   });
 
   if (isCoursesLoading) return <BaseLoading />;
-  if (initialLoadError) return <p>{initialLoadError}</p>;
   if (!courses) return null;
 
   const handleCompletedClick = (course: Course) => {
@@ -142,7 +148,16 @@ export default function MainPage() {
   };
 
   return (
-    <main className="flex h-dvh flex-col overflow-y-auto bg-gray-10 pt-[calc(var(--safe-top)+12px)] pb-[var(--bottom-nav-offset)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <PullToRefresh
+      onRefresh={fetchCourses}
+      fixedContent={<BottomNav mode="course" />}
+      restorationPagination={{
+        cursor: hasNext && !isLoadingMore ? nextCursor : null,
+        loadMore: loadMoreCourses,
+      }}
+      disabled={isDeleteMode || isCompleteModalOpen || isDeleteModalOpen || isLoadingMore}
+      className="flex h-dvh flex-col overflow-y-auto bg-gray-10 pt-[calc(var(--safe-top)+12px)] pb-[var(--bottom-nav-offset)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+    >
       <header className="flex w-full items-center justify-between px-[15px]">
         <span className="text-title-02 font-semibold leading-[1.4] tracking-[-0.45px]">
           내가 만든 코스
@@ -199,7 +214,9 @@ export default function MainPage() {
       </section>
 
       <section className="flex justify-center pb-4">
-        {isCourseEmpty || isFilteredCoursesEmpty ? (
+        {initialLoadError ? (
+          <p className="px-[15px] text-body-01 text-gray-70" role="alert">{initialLoadError}</p>
+        ) : isCourseEmpty || isFilteredCoursesEmpty ? (
           <div className="flex flex-col gap-5 items-center justify-center pt-20">
             <CourseEmpty />
             <p className="text-subtitle leading-[1.4] tracking-[-0.4px] text-gray-80 text-center">
@@ -242,7 +259,6 @@ export default function MainPage() {
 
       <div ref={ref} className="h-1 w-full" />
 
-      <BottomNav mode="course" />
-    </main>
+    </PullToRefresh>
   );
 }

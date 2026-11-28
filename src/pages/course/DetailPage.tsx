@@ -34,6 +34,7 @@ import JournalEditForm, {
   type JournalEditPlaceValue,
 } from "./components/JournalEditForm";
 import ReportModal from "@/components/ReportModal";
+import { useSwipeBackOverride } from "@/hooks/useBackSwipe";
 
 const isSubwayLine = (value: number): value is SubwayLine =>
   Number.isInteger(value) && value >= 1 && value <= 9;
@@ -112,7 +113,7 @@ function mapJournalToCourse(journal: JournalDetail): CourseDetailData {
 
 export default function DetailPage() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const { state } = useLocation();
   const { courseId: journalIdParam } = useParams();
   const journalId = Number(journalIdParam);
   const hasValidJournalId = isPositiveId(journalId);
@@ -228,13 +229,50 @@ export default function DetailPage() {
     }
   };
 
+  // 수정사항이 있는지 확인
+  const hasUnsavedJournalChanges =
+    course !== null &&
+    isEditMode &&
+    (editTitle !== course.journalTitle ||
+      editTime !== course.duration ||
+      editDate !== course.visitedAt ||
+      editPublic !== (course.isPublic ? "전체 공개" : "나만 보기") ||
+      editReview !== course.review ||
+      editPhotos.length !== course.images.length ||
+      editPhotos.some(
+        (photo, index) => photo.imageUrl !== course.images[index]?.src,
+      ) ||
+      editPlaces.some((place) => {
+        const currentPlace = course.places.find((item) => item.id === place.id);
+        return (
+          currentPlace?.description !== place.description ||
+          (currentPlace?.imageUrl ?? null) !== place.imageUrl
+        );
+      }));
+
+  // 뒤로 가기 버튼 클릭 시 실행
+  const handleBack = () => {
+    if (hasUnsavedJournalChanges) {
+      setIsLeaveConfirmModalOpen(true);
+      return;
+    }
+    navigate(-1);
+  };
+
+  useSwipeBackOverride(
+    isDeleteModalOpen || isLeaveConfirmModalOpen || isReportModalOpen || isLoginModalOpen
+      ? null
+      : handleBack,
+    hasUnsavedJournalChanges,
+  );
+
   if (!hasValidJournalId || isLoading || !course) {
     return (
       <main className="mx-auto min-h-dvh w-full max-w-[390px] bg-gray-10 text-gray-100">
         <header className="flex items-end px-[15px] pb-[10px]">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             aria-label="이전"
             className="grid size-6 place-items-center"
           >
@@ -391,48 +429,6 @@ export default function DetailPage() {
     }
   };
 
-  // 수정사항이 있는지 확인
-  const hasUnsavedJournalChanges =
-    isEditMode &&
-    (editTitle !== course.journalTitle ||
-      editTime !== course.duration ||
-      editDate !== course.visitedAt ||
-      editPublic !== (course.isPublic ? "전체 공개" : "나만 보기") ||
-      editReview !== course.review ||
-      editPhotos.length !== course.images.length ||
-      editPhotos.some(
-        (photo, index) => photo.imageUrl !== course.images[index]?.src,
-      ) ||
-      editPlaces.some((place) => {
-        const currentPlace = course.places.find((item) => item.id === place.id);
-        return (
-          currentPlace?.description !== place.description ||
-          (currentPlace?.imageUrl ?? null) !== place.imageUrl
-        );
-      }));
-
-  // 여행일지 목록에서 들어온 경우에 뒤로 가면 여행일지 탭이 보이도록 설정
-  const navigateBack = () => {
-    if (
-      (location.state as { from?: string } | null)?.from === "mypage-journal"
-    ) {
-      navigate("/mypage", { state: { tab: "journal" } });
-      return;
-    }
-
-    // 아닌 경우 그냥 뒤로 가기
-    navigate(-1);
-  };
-
-  // 뒤로 가기 버튼 클릭 시 실행
-  const handleBack = () => {
-    if (hasUnsavedJournalChanges) {
-      setIsLeaveConfirmModalOpen(true);
-      return;
-    }
-    navigateBack();
-  };
-
   const authorProfileContent = (
     <>
       <div className="flex gap-[14px] justify-center items-center">
@@ -474,7 +470,7 @@ export default function DetailPage() {
           onConfirm={() => {
             setIsLeaveConfirmModalOpen(false);
             setIsEditMode(false);
-            navigateBack();
+            navigate(-1);
           }}
         />
       )}
@@ -608,13 +604,17 @@ export default function DetailPage() {
               <button
                 type="button"
                 className="flex h-[73px] w-full items-center gap-[14px] rounded-[20px] bg-secondary-10 px-[15px] py-3 text-left"
-                onClick={() =>
-                  !isLoggedIn
-                    ? setIsLoginModalOpen(true)
-                    : course.isMine
-                      ? navigate("/mypage", { state: { tab: "journal" } })
-                      : navigate(`/profile/${course.writerId}`)
-                }
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    setIsLoginModalOpen(true);
+                  } else if (!course.isMine) {
+                    navigate(`/profile/${course.writerId}`);
+                  } else if (state?.fromMyPage) {
+                    navigate(-1);
+                  } else {
+                    navigate("/mypage", { state: { tab: "journal" } });
+                  }
+                }}
                 aria-label={`${course.writerName} 프로필 보기`}
               >
                 {authorProfileContent}

@@ -1,6 +1,6 @@
 import Header from "@/components/Header";
 import Dropdown from "./components/Dropdown";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CATEGORY_LABELS } from "./data/mockPlaces";
 import PlacePreviewCard from "./components/PlacePreviewCard";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,7 @@ import type { StatusChipVariant } from "./components/StatusChip";
 import { getPlaces, type Place } from "@/api/admin";
 import { useInView } from "react-intersection-observer";
 import BaseLoading from "@/components/BaseLoading";
+import { useListHistoryValue, useListScrollRestoration } from "@/hooks/useListScrollRestoration";
 
 type StatusOption = {
   label: string;
@@ -29,11 +30,12 @@ export default function TrashPage() {
   const [hasNext, setHasNext] = useState(false);
   const [isPlacesLoading, setIsPlacesLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadingMore = useRef(false);
   const [placesError, setPlacesError] = useState<string | null>(null);
 
-  const [selectedStatusOption, setSelectedStatusOption] = useState<
+  const [selectedStatusOption, setSelectedStatusOption] = useListHistoryValue<
     StatusOption["value"] | null
-  >(null);
+  >("status", null);
 
   useEffect(() => {
     const fetchInitialPlaces = async () => {
@@ -63,7 +65,8 @@ export default function TrashPage() {
 
   // 스크롤로 다음 페이지 불러오기
   const loadMorePlaces = async () => {
-    if (!nextCursor) return;
+    if (!nextCursor || loadingMore.current) return;
+    loadingMore.current = true;
     try {
       setIsLoadingMore(true);
       const data = await getPlaces(
@@ -82,6 +85,7 @@ export default function TrashPage() {
       console.error(e);
       setPlacesError("장소 목록을 불러오지 못했습니다.");
     } finally {
+      loadingMore.current = false;
       setIsLoadingMore(false);
     }
   };
@@ -95,6 +99,10 @@ export default function TrashPage() {
       }
     },
   });
+  const restoreScroll = useListScrollRestoration({
+    cursor: hasNext && !isLoadingMore ? nextCursor : null,
+    loadMore: loadMorePlaces,
+  });
 
   if (isPlacesLoading) return <BaseLoading />;
   if (placesError) return <p>{placesError}</p>;
@@ -107,9 +115,9 @@ export default function TrashPage() {
   );
 
   return (
-    <main className="flex flex-col h-dvh  bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <main ref={restoreScroll} className="flex flex-col h-dvh  bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* header */}
-      <Header showBack />
+      <Header showBack backFallbackPath="/admin" />
       <section className="flex justify-center pb-2.5">
         <div className="flex flex-col w-[360px]">
           <span className="text-title-01 font-semibold leading-[1.4] tracking-[-0.5px] text-gray-100">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ArrowNext from "@/assets/arrow-next(gray).svg?react";
 import Heart from "@/assets/heart.svg?react";
@@ -9,6 +9,8 @@ import {
   type ExploreMainResponse,
 } from "@/api/explore";
 import BottomNav from "@/components/BottomNav";
+import PullToRefresh from "@/components/PullToRefresh";
+import { useListHistoryValue } from "@/hooks/useListScrollRestoration";
 import ExploreCourseCard from "./components/ExploreCourseCard";
 import ExploreCourseItem from "./components/ExploreCourseItem";
 import ExploreLineTabs from "./components/ExploreLineTabs";
@@ -21,8 +23,10 @@ import { getDisplayedExploreLines } from "./utils/exploreLines";
 
 export default function ExplorePage() {
   const navigate = useNavigate();
-  const [line, setLine] = useState<number | null>(null);
-  const [query, setQuery] = useState("");
+  const [line, setLine] = useListHistoryValue<number | null>("line", null);
+  const selectedLineRef = useRef(line);
+  const refreshPending = useRef(false);
+  const [query, setQuery] = useListHistoryValue("query", "");
   const [data, setData] = useState<ExploreMainResponse | null>(null);
   const matchedConceptTours = getDisplayedConceptTours(data?.conceptTours);
   const displayedConceptTours = featuredConceptTours.map((design) => ({
@@ -33,48 +37,44 @@ export default function ExplorePage() {
   }));
   const displayedLines = getDisplayedExploreLines(data?.lines);
 
-  useEffect(() => {
-    void getExploreMain()
-      .then((response) => {
-        const responseLines = getDisplayedExploreLines(response.lines);
-        const selectedLine =
-          responseLines.find((lineItem) => lineItem.id === 1) ??
-          responseLines[0];
-
-        setLine(selectedLine?.id ?? null);
-
-        if (!selectedLine) {
-          setData(response);
-          return;
-        }
-
-        setData((current) => ({
-          ...(current ?? response),
-          ...response,
-          lineCourses:
-            selectedLine.id === response.selectedLineId
-              ? response.lineCourses
-              : [],
-        }));
-
-        if (selectedLine.id !== response.selectedLineId) {
-          void getExploreCourses({ lineId: selectedLine.id, size: 3 })
-            .then((courseResponse) =>
-              setData((current) =>
-                current
-                  ? { ...current, lineCourses: courseResponse.courses }
-                  : current,
-              ),
-            )
-            .catch(() =>
-              setData((current) =>
-                current ? { ...current, lineCourses: [] } : current,
-              ),
-            );
-        }
-      })
-      .catch(() => setData(null));
+  const fetchLineCourses = useCallback(async (lineId: number) => {
+    const response = await getExploreCourses({ lineId, size: 3 });
+    if (selectedLineRef.current === lineId) {
+      setData((current) => current && { ...current, lineCourses: response.courses });
+    }
   }, []);
+
+  const refreshExplore = useCallback(async () => {
+    if (refreshPending.current) return;
+    refreshPending.current = true;
+    try {
+      const response = await getExploreMain();
+      const responseLines = getDisplayedExploreLines(response.lines);
+      const currentLine = selectedLineRef.current;
+      const selectedLine =
+        responseLines.find(({ id }) => id === currentLine) ??
+        responseLines.find(({ id }) => id === 1) ??
+        responseLines[0];
+      const nextLine = selectedLine?.id ?? null;
+      selectedLineRef.current = nextLine;
+      setLine(nextLine);
+
+      const needsLineRequest = nextLine !== null && nextLine !== response.selectedLineId;
+      setData((current) => ({
+        ...response,
+        lineCourses: needsLineRequest
+          ? (currentLine === nextLine ? current?.lineCourses ?? [] : [])
+          : response.lineCourses,
+      }));
+      if (needsLineRequest) await fetchLineCourses(nextLine);
+    } finally {
+      refreshPending.current = false;
+    }
+  }, [fetchLineCourses, setLine]);
+
+  useEffect(() => {
+    void refreshExplore().catch(console.error);
+  }, [refreshExplore]);
 
   const renderMore = (label: string) => (
     <span className="flex items-center gap-1">
@@ -84,7 +84,11 @@ export default function ExplorePage() {
   );
 
   return (
-    <main className="flex h-dvh flex-col bg-gray-10 gap-3 pt-[calc(var(--safe-top)+12px)] pb-[var(--bottom-nav-offset)] text-gray-100 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <PullToRefresh
+      onRefresh={refreshExplore}
+      fixedContent={<BottomNav mode="course" activeTab="explore" />}
+      className="flex h-dvh flex-col bg-gray-10 gap-3 pt-[calc(var(--safe-top)+12px)] pb-[var(--bottom-nav-offset)] text-gray-100 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+    >
       <header className="flex items-start justify-between px-[15px]">
         <h1 className="text-title-01 font-semibold leading-[1.4] tracking-[-0.025em]">
           오늘은 어떤 환승여행을
@@ -206,20 +210,13 @@ export default function ExplorePage() {
           lines={displayedLines}
           selectedLine={line}
           onSelect={(lineId) => {
+            selectedLineRef.current = lineId;
             setLine(lineId);
-            void getExploreCourses({ lineId, size: 3 })
-              .then((response) =>
-                setData((current) =>
-                  current
-                    ? { ...current, lineCourses: response.courses }
-                    : current,
-                ),
-              )
-              .catch(() =>
-                setData((current) =>
-                  current ? { ...current, lineCourses: [] } : current,
-                ),
-              );
+            void fetchLineCourses(lineId).catch(() => {
+              if (selectedLineRef.current === lineId) {
+                setData((current) => current && { ...current, lineCourses: [] });
+              }
+            });
           }}
         />
         <div className="flex flex-col gap-3 px-[15px] py-2">
@@ -240,7 +237,6 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      <BottomNav mode="course" activeTab="explore" />
-    </main>
+    </PullToRefresh>
   );
 }

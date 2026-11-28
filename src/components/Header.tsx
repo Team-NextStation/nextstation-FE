@@ -1,12 +1,14 @@
 import BackIcon from '@/assets/back.svg?react';
 import CloseIcon from '@/assets/close.svg?react';
-import { useNavigate } from 'react-router-dom';
+import { useBackNavigation } from '@/hooks/useBackNavigation';
 
 interface HeaderProps {
   title?: string;
   showBack?: boolean;
   showClose?: boolean;
+  backFallbackPath?: string;
   onBackClick?: () => void;
+  onSwipeBack?: () => void;
   onCloseClick?: () => void;
 }
 
@@ -14,24 +16,16 @@ export default function Header({
   title,
   showBack = false,
   showClose = false,
+  backFallbackPath = '/',
   onBackClick,
+  onSwipeBack,
   onCloseClick,
 }: HeaderProps) {
-  const navigate = useNavigate();
-
-  const handleBackClick = () => {
-    if (onBackClick) {
-      onBackClick();
-      return;
-    }
-
-    if (window.history.length > 1) {
-      navigate(-1);
-      return;
-    }
-
-    navigate('/');
-  };
+  const goBack = useBackNavigation(backFallbackPath, {
+    onBack: onBackClick,
+    onSwipeBack,
+    registerSwipe: showBack || Boolean(onSwipeBack),
+  });
 
   return (
     <header className="grid h-[50px] w-full shrink-0 grid-cols-[40px_1fr_40px] items-center px-3">
@@ -39,7 +33,7 @@ export default function Header({
         {showBack && (
           <button
             type="button"
-            onClick={handleBackClick}
+            onClick={goBack}
             aria-label="뒤로가기"
             className="flex size-6 items-center justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-primary-50 focus-visible:ring-offset-2"
           >

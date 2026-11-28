@@ -31,7 +31,7 @@ export default function StampDetailModal({
 
   const handleGoToJournal = () => {
     if (stamp.journalId) {
-      navigate(`/course/${stamp.journalId}`);
+      navigate(`/course/${stamp.journalId}`, { state: { fromMyPage: true } });
       return;
     }
 

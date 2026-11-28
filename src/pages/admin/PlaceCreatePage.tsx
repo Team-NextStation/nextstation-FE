@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import DetailTagChip from "./components/DetailTagChip";
 import PlacePhotoUploader from "./components/PlacePhotoUploader";
 import CTAButton from "@/components/CTAButton";
-import { useNavigate } from "react-router-dom";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import Search from "@/assets/admin/search.svg?react";
 import Close from "@/assets/close.svg?react";
 import { createPlace, getKakaoSearch, type KakaoPlace } from "@/api/admin";
@@ -55,7 +55,7 @@ const hashtagSortOptions: HastagOption[] = [
 ];
 
 export default function PlaceCreatePage() {
-  const navigate = useNavigate();
+  const goBack = useBackNavigation("/admin/place", { registerSwipe: false });
   const [selectedLine, setSelectedLine] = useState<Option | null>(null);
   const [selectedStation, setSelectedStation] = useState<Option | null>(null);
   const [stationLookup, setStationLookup] = useState<{
@@ -197,7 +197,7 @@ export default function PlaceCreatePage() {
         xCoordinate: selectedPlace.xCoordinate,
         yCoordinate: selectedPlace.yCoordinate,
       });
-      navigate("/admin/place/");
+      goBack();
     } catch (e) {
       console.error(e);
       showToast({
@@ -208,7 +208,7 @@ export default function PlaceCreatePage() {
 
   return (
     <main className="flex flex-col h-dvh bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-      <Header showClose onCloseClick={() => navigate("/admin/place")} />
+      <Header showClose onCloseClick={goBack} />
 
       <div className="flex justify-center">
         <div className="flex flex-col gap-8 w-[360px]">
@@ -393,7 +393,7 @@ export default function PlaceCreatePage() {
             <textarea
               placeholder="장소에 대한 한 줄 소개를 작성해주세요."
               value={description}
-              className="p-4 rounded-lg bg-white outline-none min-h-[90px] resize-none caret-primary-50"
+              className="p-4 rounded-lg bg-white outline-none min-h-[90px] resize-none text-subtitle caret-primary-50"
               onChange={(e) => setDescription(e.target.value)}
             />
           </section>

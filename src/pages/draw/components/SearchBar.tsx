@@ -133,7 +133,7 @@ export default function SearchBar({
               }}
               placeholder="나와 가장 가까운 지하철역 찾아보기"
               className={[
-                "min-w-0 flex-1 bg-transparent outline-none text-body-01 leading-[1.4] tracking-[-0.025em]",
+                "min-w-0 flex-1 bg-transparent outline-none text-subtitle leading-[1.4] tracking-[-0.025em]",
                 isSelected ? "text-gray-100" : "text-gray-70"
               ].join(" ")}
             />

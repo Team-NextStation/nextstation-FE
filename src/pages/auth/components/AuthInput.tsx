@@ -61,7 +61,7 @@ export default function AuthInput({
             id={inputId}
             type={isPasswordVisible ? 'text' : 'password'}
             aria-invalid={Boolean(errorMessage)}
-            className={`h-full w-full rounded-lg border px-4 py-3 pr-12 text-body-01 font-regular text-gray-70 placeholder:text-gray-70 focus:border-primary-50 focus:bg-white focus:outline-none ${
+            className={`h-full w-full rounded-lg border px-4 py-3 pr-12 text-subtitle font-regular text-gray-70 placeholder:text-gray-70 focus:border-primary-50 focus:bg-white focus:outline-none ${
               hasValue || errorMessage
                 ? 'border-primary-50 bg-white'
                 : 'border-transparent bg-gray-20'
@@ -104,7 +104,7 @@ export default function AuthInput({
             <input
               {...props}
               aria-invalid={Boolean(errorMessage)}
-              className="min-w-0 flex-1 bg-transparent text-body-01 font-regular leading-[1.4] text-gray-70 placeholder:text-gray-70 focus:outline-none"
+              className="min-w-0 flex-1 bg-transparent text-subtitle font-regular leading-[1.4] text-gray-70 placeholder:text-gray-70 focus:outline-none"
             />
             {timer && (
               <span className="ml-3 shrink-0 text-body-02 font-regular leading-none text-primary-60">
@@ -142,7 +142,7 @@ export default function AuthInput({
       <input
         {...props}
         aria-invalid={Boolean(errorMessage)}
-        className={`h-[50px] w-full rounded-lg border px-4 py-3 text-body-01 font-regular text-gray-70 placeholder:text-gray-70 focus:border-primary-50 focus:bg-white focus:outline-none ${
+        className={`h-[50px] w-full rounded-lg border px-4 py-3 text-subtitle font-regular text-gray-70 placeholder:text-gray-70 focus:border-primary-50 focus:bg-white focus:outline-none ${
           hasValue || errorMessage
             ? 'border-primary-50 bg-white'
             : 'border-transparent bg-gray-20'

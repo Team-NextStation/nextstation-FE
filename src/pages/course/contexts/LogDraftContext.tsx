@@ -53,6 +53,7 @@ export const INITIAL_LOG_DRAFT: LogDraft = {
 export interface LogDraftContextValue {
   draft: LogDraft;
   setLogName: (value: string) => void;
+  discardChanges: () => void;
   initializeFromStamp: (value: {
     memberStampId: number;
     stationId: number;
@@ -89,12 +90,28 @@ export function useLogDraft() {
 }
 
 export function LogDraftProvider({ children }: PropsWithChildren) {
-  const [draft, setDraft] = useState<LogDraft>(INITIAL_LOG_DRAFT);
-  const [initialLogName, setInitialLogName] = useState(
-    INITIAL_LOG_DRAFT.logName,
-  );
+  const [{ draft, initialDraft, revision }, setDraftState] = useState({
+    draft: INITIAL_LOG_DRAFT,
+    initialDraft: INITIAL_LOG_DRAFT,
+    revision: 0,
+  });
 
   const value = useMemo<LogDraftContextValue>(() => {
+    const updateDraft = (update: (current: LogDraft) => LogDraft) => {
+      setDraftState((current) => {
+        // Photo uploads from a discarded draft can finish after leaving.
+        if (current.revision !== revision) return current;
+        return { ...current, draft: update(current.draft) };
+      });
+    };
+
+    const discardChanges = () => {
+      setDraftState((current) => {
+        if (current.revision !== revision) return current;
+        return { ...current, draft: current.initialDraft, revision: revision + 1 };
+      });
+    };
+
     const initializeFromStamp = ({
       memberStampId,
       stationId,
@@ -112,8 +129,7 @@ export function LogDraftProvider({ children }: PropsWithChildren) {
       tags: string[];
       placeReviews: PlaceReviewDraft[];
     }) => {
-      setInitialLogName(logName);
-      setDraft({
+      const nextDraft = {
         ...INITIAL_LOG_DRAFT,
         memberStampId,
         stationId,
@@ -122,46 +138,51 @@ export function LogDraftProvider({ children }: PropsWithChildren) {
         logName,
         tags,
         placeReviews,
-      });
+      };
+      setDraftState((current) => ({
+        draft: nextDraft,
+        initialDraft: nextDraft,
+        revision: current.revision + 1,
+      }));
     };
 
     const setLogName = (value: string) => {
-      setDraft((prev) => ({ ...prev, logName: value }));
+      updateDraft((prev) => ({ ...prev, logName: value }));
     };
 
     const setAcquiredDate = (value: string | null) => {
-      setDraft((prev) => ({ ...prev, acquiredDate: value }));
+      updateDraft((prev) => ({ ...prev, acquiredDate: value }));
     };
 
     const setMemberStampId = (value: number | null) => {
-      setDraft((prev) => ({ ...prev, memberStampId: value }));
+      updateDraft((prev) => ({ ...prev, memberStampId: value }));
     };
 
     const setSelectedDate = (value: string | null) => {
-      setDraft((prev) => ({ ...prev, selectedDate: value }));
+      updateDraft((prev) => ({ ...prev, selectedDate: value }));
     };
 
     const setSelectedTime = (value: string | null) => {
-      setDraft((prev) => ({ ...prev, selectedTime: value }));
+      updateDraft((prev) => ({ ...prev, selectedTime: value }));
     };
 
     const setReview = (value: string) => {
-      setDraft((prev) => ({ ...prev, review: value }));
+      updateDraft((prev) => ({ ...prev, review: value }));
     };
 
     const setPhotos = (value: string[]) => {
-      setDraft((prev) => ({ ...prev, photos: value }));
+      updateDraft((prev) => ({ ...prev, photos: value }));
     };
 
     const setVisibility = (value: Visibility) => {
-      setDraft((prev) => ({ ...prev, visibility: value }));
+      updateDraft((prev) => ({ ...prev, visibility: value }));
     };
 
     const updatePlaceReview = (
       placeId: number,
       updates: Partial<Pick<PlaceReviewDraft, 'review' | 'photo'>>
     ) => {
-      setDraft((prev) => ({
+      updateDraft((prev) => ({
         ...prev,
         placeReviews: prev.placeReviews.map((place) =>
           place.id === placeId ? { ...place, ...updates } : place
@@ -170,7 +191,7 @@ export function LogDraftProvider({ children }: PropsWithChildren) {
     };
 
     const isDirty =
-      draft.logName !== initialLogName ||
+      draft.logName !== initialDraft.logName ||
       draft.selectedDate !== null ||
       draft.selectedTime !== null ||
       draft.review.trim() !== '' ||
@@ -183,6 +204,7 @@ export function LogDraftProvider({ children }: PropsWithChildren) {
     return {
       draft,
       initializeFromStamp,
+      discardChanges,
       setLogName,
       setAcquiredDate,
       setMemberStampId,
@@ -194,7 +216,7 @@ export function LogDraftProvider({ children }: PropsWithChildren) {
       updatePlaceReview,
       isDirty,
     };
-  }, [draft, initialLogName]);
+  }, [draft, initialDraft, revision]);
 
   return (
     <LogDraftContext.Provider value={value}>{children}</LogDraftContext.Provider>

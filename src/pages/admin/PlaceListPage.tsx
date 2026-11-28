@@ -4,7 +4,7 @@ import Close from "@/assets/admin/close.svg?react";
 import PlacePreviewCard from "./components/PlacePreviewCard";
 import CategoryTabs from "../course/components/CategoryTabs";
 import { LINES, stationsByLine } from "@/data/stationsByLine";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Dropdown from "../admin/components/Dropdown";
 import Search from "@/assets/admin/search.svg?react";
@@ -15,6 +15,8 @@ import { getPlaces, type Place } from "@/api/admin";
 import { searchStations } from "@/api/stations";
 import { useInView } from "react-intersection-observer";
 import BaseLoading from "@/components/BaseLoading";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { useListHistoryValue, useListScrollRestoration } from "@/hooks/useListScrollRestoration";
 
 type CategoryOption = {
   label: string;
@@ -51,21 +53,25 @@ export default function PlaceListPage() {
   const [hasNext, setHasNext] = useState(false);
   const [isPlacesLoading, setIsPlacesLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadingMore = useRef(false);
   const [placesError, setPlacesError] = useState<string | null>(null);
-  const [selectedLine, setSelectedLine] = useState("전체");
-  const [selectedStation, setSelectedStation] = useState<string | null>(null);
-  const [stationLookup, setStationLookup] = useState<{
+  const [selectedLine, setSelectedLine] = useListHistoryValue("line", "전체");
+  const [selectedStation, setSelectedStation] = useListHistoryValue<string | null>("station", null);
+  const [stationLookup, setStationLookup] = useListHistoryValue<{
     stationName: string;
     stationId: number | null;
-  } | null>(null);
+  } | null>("stationLookup", null);
   const [isStationMenuOpen, setIsStationMenuOpen] = useState(false);
+  const goBack = useBackNavigation("/admin", {
+    swipeEnabled: !isPlacesLoading && !placesError && !isStationMenuOpen,
+  });
 
-  const [selectedCategoryOption, setSelectedCategoryOption] = useState<
+  const [selectedCategoryOption, setSelectedCategoryOption] = useListHistoryValue<
     CategoryOption["value"] | null
-  >(null);
-  const [selectedStatusOption, setSelectedStatusOption] = useState<
+  >("category", null);
+  const [selectedStatusOption, setSelectedStatusOption] = useListHistoryValue<
     StatusOption["value"] | null
-  >(null);
+  >("status", null);
 
   const selectedLineId =
     selectedLine === "전체" ? undefined : Number(selectedLine.replace("호선", ""));
@@ -96,7 +102,7 @@ export default function PlaceListPage() {
     return () => {
       isCancelled = true;
     };
-  }, [selectedStation]);
+  }, [selectedStation, setStationLookup]);
 
   const selectedStationId =
     selectedStation && stationLookup?.stationName === selectedStation
@@ -133,7 +139,8 @@ export default function PlaceListPage() {
 
   // 스크롤로 다음 페이지 불러오기
   const loadMorePlaces = async () => {
-    if (!nextCursor) return;
+    if (!nextCursor || loadingMore.current) return;
+    loadingMore.current = true;
     try {
       setIsLoadingMore(true);
       const data = await getPlaces(
@@ -154,6 +161,7 @@ export default function PlaceListPage() {
       console.error(e);
       setPlacesError("장소 목록을 불러오지 못했습니다.");
     } finally {
+      loadingMore.current = false;
       setIsLoadingMore(false);
     }
   };
@@ -166,6 +174,10 @@ export default function PlaceListPage() {
         loadMorePlaces();
       }
     },
+  });
+  const restoreScroll = useListScrollRestoration({
+    cursor: hasNext && !isLoadingMore ? nextCursor : null,
+    loadMore: loadMorePlaces,
   });
 
   if (isPlacesLoading) return <BaseLoading />;
@@ -185,14 +197,14 @@ export default function PlaceListPage() {
   );
 
   return (
-    <main className="flex flex-col h-dvh bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <main ref={restoreScroll} className="flex flex-col h-dvh bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* header */}
       <section className="flex flex-col gap-4 pb-2.5">
         <header className="flex w-full h-6 items-center px-[15px] justify-between">
           <div className="flex items-center justify-start">
             <button
               type="button"
-              onClick={() => navigate("/admin")}
+              onClick={goBack}
               aria-label="뒤로가기"
               className="flex size-6 items-center justify-center outline-none"
             >

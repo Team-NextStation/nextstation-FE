@@ -1,3 +1,4 @@
+import { useListScrollRestoration } from "@/hooks/useListScrollRestoration";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getConceptTours, type ConceptTour } from "@/api/explore";
@@ -10,6 +11,7 @@ import { getDisplayedConceptTours } from "./data/conceptTours";
 
 export default function ConceptToursPage() {
   const navigate = useNavigate();
+  const restoreScroll = useListScrollRestoration();
   const [query, setQuery] = useState("");
   const [conceptTours, setConceptTours] = useState<ConceptTour[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +44,7 @@ export default function ConceptToursPage() {
   }
 
   return (
-    <main className="flex h-dvh flex-col bg-gray-10 text-gray-100 pt-[calc(var(--safe-top)+12px)] text-gray-100 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <main ref={restoreScroll} className="flex h-dvh flex-col bg-gray-10 text-gray-100 pt-[calc(var(--safe-top)+12px)] text-gray-100 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       <Header showBack />
       <div className="flex flex-col gap-1 px-[15px] pb-2.5">
         <h1 className="text-title-01 font-semibold leading-[1.4] tracking-[-0.025em]">

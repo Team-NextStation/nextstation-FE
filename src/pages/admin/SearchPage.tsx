@@ -3,6 +3,8 @@ import BackIcon from "@/assets/back.svg?react";
 import PlacePreviewCard from "./components/PlacePreviewCard";
 import { useEffect, useState } from "react";
 import { getSearchPlaces, type Place } from "@/api/admin";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { useListHistoryValue, useListScrollRestoration } from "@/hooks/useListScrollRestoration";
 
 const CATEGORY_STYLE_LABELS: Record<string, string> = {
   CULTURE: "문화공간",
@@ -19,7 +21,9 @@ interface SearchResultState {
 
 export default function SearchPage() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
+  const goBack = useBackNavigation("/admin/place");
+  const restoreScroll = useListScrollRestoration();
+  const [query, setQuery] = useListHistoryValue("query", "");
   // 마지막으로 응답이 온 검색어와 그 결과를 같이 저장
   const [searchResult, setSearchResult] = useState<SearchResultState | null>(
     null,
@@ -27,11 +31,7 @@ export default function SearchPage() {
   const keyword = query.trim();
 
   // 디바운스
-  const [debouncedKeyword, setDebouncedKeyword] = useState("");
-
-  const handleBackClick = () => {
-    navigate(-1);
-  };
+  const [debouncedKeyword, setDebouncedKeyword] = useState(keyword);
 
   // keyword가 변경되고 500ms 뒤에 debouncedKeyword를 갱신
   useEffect(() => {
@@ -84,13 +84,13 @@ export default function SearchPage() {
   if (displayedError) return <p>{displayedError}</p>;
 
   return (
-    <main className="flex flex-col h-dvh gap-[17px] bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <main ref={restoreScroll} className="flex flex-col h-dvh gap-[17px] bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* header */}
       <header className="flex w-full items-center px-3 gap-4 pb-2.5">
         <div className="flex items-center justify-start">
           <button
             type="button"
-            onClick={handleBackClick}
+            onClick={goBack}
             aria-label="뒤로가기"
             className="flex size-6 items-center justify-center outline-none"
           >
@@ -99,7 +99,7 @@ export default function SearchPage() {
         </div>
 
         <input
-          className="flex-1 px-4 py-3 rounded-lg border border-gray-30 bg-gray-20 text-body-01 leading-[1.4] tracking-[-0.35px] text-gray-90 outline-none caret-primary-50"
+          className="flex-1 px-4 py-3 rounded-lg border border-gray-30 bg-gray-20 text-subtitle leading-[1.4] tracking-[-0.35px] text-gray-90 outline-none caret-primary-50"
           placeholder="장소명 검색"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

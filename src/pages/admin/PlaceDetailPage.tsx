@@ -13,6 +13,7 @@ import {
   type placeDetail,
 } from "@/api/admin";
 import BaseLoading from "@/components/BaseLoading";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 // 장소로부터 진입
 
@@ -26,6 +27,14 @@ export default function PlaceDetailPage() {
   const [isRejectedModalOpen, setIsRejectedModalOpen] = useState(false);
   const [isDeletedModalOpen, setIsDeletedModalOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const goBack = useBackNavigation("/admin/place", {
+    swipeEnabled:
+      !isLoading &&
+      Boolean(place) &&
+      !isMenuOpen &&
+      !isRejectedModalOpen &&
+      !isDeletedModalOpen,
+  });
 
   useEffect(() => {
     const fetchPlaceDetail = async () => {
@@ -108,7 +117,7 @@ export default function PlaceDetailPage() {
         <div className="flex items-center">
           <button
             type="button"
-            onClick={() => navigate("/admin/place")}
+            onClick={goBack}
             aria-label="뒤로가기"
             className="flex size-6 items-center justify-center outline-none"
           >

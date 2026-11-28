@@ -9,14 +9,17 @@ import CalendarIcon from "@/assets/calendar.svg?react";
 import ConfirmModal from "@/components/ConfirmModal";
 import NameEditInput from "./components/NameEditInput";
 import { useLogDraft } from "./contexts/LogDraftContext";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 const timeOptions = ["3~4시간", "반나절", "하루종일"];
 
 function LogInfoPage() {
   const navigate = useNavigate();
+  const goBack = useBackNavigation("/course", { registerSwipe: false });
   const { courseId } = useParams();
   const {
     draft,
+    discardChanges,
     setLogName,
     setSelectedDate,
     setSelectedTime,
@@ -34,19 +37,21 @@ function LogInfoPage() {
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isLogConfirmOpen, setIsLogConfirmOpen] = useState(false);
+  const confirmLeave = () => setIsLogConfirmOpen(true);
 
   return (
     <main className="flex flex-col h-dvh overflow-y-auto bg-gray-10 items-center pt-[var(--safe-top)] pb-[calc(var(--safe-bottom)+140px)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* 수정사항이 있을경우 경고 모달이 떠야함 */}
       <Header
         showClose
+        onSwipeBack={isDirty ? confirmLeave : undefined}
         onCloseClick={() => {
           if (isDirty) {
-            setIsLogConfirmOpen(true);
+            confirmLeave();
             return;
           }
 
-          navigate("/course");
+          goBack();
         }}
       />
       {isLogConfirmOpen && (
@@ -55,7 +60,10 @@ function LogInfoPage() {
             "해당 기록은 저장되지 않았습니다.\n저장하지 않고 나가시겠습니까?"
           }
           onClose={() => setIsLogConfirmOpen(false)}
-          onConfirm={() => navigate(`/course`)}
+          onConfirm={() => {
+            discardChanges();
+            goBack();
+          }}
         />
       )}
       {/* 코스 제목 */}
@@ -152,7 +160,7 @@ function LogInfoPage() {
               value={draft.review}
               onChange={(e) => setReview(e.target.value)}
               placeholder={`오늘 ${stationName} 여행은 어땠나요?`}
-              className="w-full h-full resize-none bg-transparent caret-primary-50 text-body-01 text-gray-100 placeholder:text-gray-50 focus:outline-none"
+              className="w-full h-full resize-none bg-transparent caret-primary-50 text-subtitle text-gray-100 placeholder:text-gray-50 focus:outline-none"
             />
           </div>
         </div>

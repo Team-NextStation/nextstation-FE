@@ -1,3 +1,4 @@
+import { useListScrollRestoration } from "@/hooks/useListScrollRestoration";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -10,6 +11,7 @@ import ExploreCourseItem from "./components/ExploreCourseItem";
 
 export default function PopularCoursesPage() {
   const navigate = useNavigate();
+  const restoreScroll = useListScrollRestoration();
   const [courses, setCourses] = useState<ExploreCourse[]>([]);
 
   useEffect(() => {
@@ -19,7 +21,7 @@ export default function PopularCoursesPage() {
   }, []);
 
   return (
-    <main className="flex h-dvh flex-col bg-gray-10 text-gray-100 pt-[calc(var(--safe-top)+12px)] text-gray-100 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <main ref={restoreScroll} className="flex h-dvh flex-col bg-gray-10 text-gray-100 pt-[calc(var(--safe-top)+12px)] text-gray-100 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       <Header showBack />
       <div className="px-[15px] pb-2.5">
         <h1 className="text-title-01 font-semibold tracking-[-0.025em]">

@@ -8,6 +8,7 @@ import LogPreviewCard from "./components/LogPreviewCrad";
 import VisibilityCard from "./components/VisibilityCard";
 import { useLogDraft } from "./contexts/LogDraftContext";
 import { showToast } from "./components/ShowToast";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 const TRAVEL_DURATION_MAP: Record<string, TravelDuration> = {
   "3~4시간": "SHORT",
@@ -21,9 +22,10 @@ function toApiDate(date: string) {
 
 function LogVisibilityPage() {
   const navigate = useNavigate();
+  const goBack = useBackNavigation("/course", { registerSwipe: false });
   const [isLogConfirmOpen, setIsLogConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { draft, setVisibility, isDirty } = useLogDraft();
+  const { draft, discardChanges, setVisibility, isDirty } = useLogDraft();
   const stationName = draft.stationName ?? "환승역";
 
   const handleSave = async () => {
@@ -85,7 +87,7 @@ function LogVisibilityPage() {
             return;
           }
 
-          navigate("/course");
+          goBack();
         }}
       />
       {isLogConfirmOpen && (
@@ -94,7 +96,10 @@ function LogVisibilityPage() {
             "해당 기록은 저장되지 않습니다.\n저장하지 않고 나가시겠습니까?"
           }
           onClose={() => setIsLogConfirmOpen(false)}
-          onConfirm={() => navigate(`/course`)}
+          onConfirm={() => {
+            discardChanges();
+            goBack();
+          }}
         />
       )}
 

@@ -14,6 +14,7 @@ import type { PanInfo } from "motion/react";
 import StampDetailModal from "./StampDetailModal";
 import { showToast } from "@/pages/course/components/ShowToast";
 import MyPageModal from "./MyPageModal";
+import { useListHistoryValue } from "@/hooks/useListScrollRestoration";
 
 const SWIPE_THRESHOLD = 50;
 
@@ -35,7 +36,7 @@ export default function StampListView({
     providedStamps === undefined,
   );
   const [stampsError, setStampsError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useListHistoryValue("stampPage", 1);
   const stamps = providedStamps ?? myStamps;
   const pageCount = Math.ceil(stamps.length / STAMPS_PER_PAGE); // 전체 페이지 수
   const isStampEmpty = stamps.length < 1;
@@ -108,7 +109,6 @@ export default function StampListView({
   const handleSkipJournalReminder = () => {
     setIsJournalReminderModalOpen(false);
     closeStampDetailModal();
-    navigate("/mypage");
   };
 
   if (isStampsLoading) return <BaseLoading />;

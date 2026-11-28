@@ -143,7 +143,7 @@ export default function PlaceReviewCard({
             autoFocus
             rows={1}
             placeholder='이 장소는 어땠나요?'
-            className='w-full resize-none overflow-hidden rounded-[12px] caret-primary-50 border border-gray-40 p-2 text-body-02 leading-[1.4] tracking-[-0.025em] text-gray-90 placeholder:text-gray-50 outline-none' 
+            className='w-full resize-none overflow-hidden rounded-[12px] caret-primary-50 border border-gray-40 p-2 text-subtitle leading-[1.4] tracking-[-0.025em] text-gray-90 placeholder:text-gray-50 outline-none'
           />
         ): (
           <button
@@ -151,7 +151,7 @@ export default function PlaceReviewCard({
             onClick={() => setIsEditing(true)}
             className="w-full rounded-[12px] border border-gray-40 px-2 py-2 text-left"
           >
-            <p className="truncate text-body-02 leading-[1.4] tracking-[-0.025em] text-gray-90">
+            <p className="truncate text-subtitle leading-[1.4] tracking-[-0.025em] text-gray-90">
               {review || (
                 <span className="text-gray-50">이 장소는 어땠나요?</span>
               )}

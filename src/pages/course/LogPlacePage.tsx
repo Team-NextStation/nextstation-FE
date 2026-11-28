@@ -6,11 +6,13 @@ import ConfirmModal from "@/components/ConfirmModal";
 import NameEditInput from "./components/NameEditInput";
 import PlaceReviewCard from "./components/PlaceReviewCard";
 import { useLogDraft } from "./contexts/LogDraftContext";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 function LogPlacePage() {
   const navigate = useNavigate();
+  const goBack = useBackNavigation("/course", { registerSwipe: false });
   const { courseId } = useParams();
-  const { draft, setLogName, updatePlaceReview, isDirty } = useLogDraft();
+  const { draft, discardChanges, setLogName, updatePlaceReview, isDirty } = useLogDraft();
 
   const [isLogConfirmOpen, setIsLogConfirmOpen] = useState(false);
 
@@ -25,14 +27,17 @@ function LogPlacePage() {
             return;
           }
 
-          navigate("/course");
+          goBack();
         }}
       />
       {isLogConfirmOpen && (
         <ConfirmModal 
           message={"해당 기록은 저장되지 않았습니다.\n저장하지 않고 나가시겠습니까?"}
           onClose={() => setIsLogConfirmOpen(false)} 
-          onConfirm={() => navigate(`/course`)}
+          onConfirm={() => {
+            discardChanges();
+            goBack();
+          }}
         />
       )}
 

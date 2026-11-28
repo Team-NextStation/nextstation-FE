@@ -6,7 +6,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   return (
     <main className="flex flex-col h-dvh  bg-gray-10 gap-8 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-      <Header showBack title="환승여행 관리자 페이지" />
+      <Header showBack title="환승여행 관리자 페이지" backFallbackPath="/mypage" />
 
       <section className="flex justify-center">
         <div className="flex flex-col gap-2.5 w-[360px]">

@@ -101,7 +101,7 @@ export default function BottomNav({ mode, activeTab = 'save' }: BottomNavProps) 
             </button>
             <button
               onClick={() => {
-                if (isChecking) {
+                if (isChecking || activeTab === 'profile') {
                   return;
                 }
 
