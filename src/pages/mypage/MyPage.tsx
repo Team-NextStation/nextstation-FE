@@ -5,7 +5,7 @@ import ProfileDefault from "@/assets/profile-default.svg?react";
 import Edit from "@/assets/edit-profile.svg?react";
 import JournalAdd from "@/assets/journal-add.svg?react";
 import * as motion from "motion/react-client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import StampListView from "./components/StampListView";
 import JournalPreviewCard from "./components/JournalPreviewCard";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -21,6 +21,7 @@ import ConfirmModal from "@/components/ConfirmModal";
 import { useInView } from "react-intersection-observer";
 import MyPageModal from "./components/MyPageModal";
 import BottomNav from "@/components/BottomNav";
+import PullToRefresh from "@/components/PullToRefresh";
 import { clearAccessToken, logout } from "@/api/auth";
 import { showToast } from "@/pages/course/components/ShowToast";
 import { useAuth } from "@/contexts/useAuth";
@@ -48,6 +49,7 @@ export default function MyPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [journalsError, setJournalsError] = useState<string | null>(null);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const journalRequestPending = useRef(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
   const [isCreateJournalModalOpen, setIsCreateJournalModalOpen] =
@@ -154,29 +156,33 @@ export default function MyPage() {
     fetchMyProfile();
   }, []);
 
-  useEffect(() => {
-    const fetchMyJournals = async () => {
-      try {
-        setIsJournalsLoading(true);
-        const data = await getJournals();
-
-        setJournals(data.journals);
-        setNextCursor(data.nextCursor);
-        setHasNext(data.hasNext);
-      } catch (e) {
-        console.error(e);
-        setJournalsError("여행 일지 목록을 불러오지 못했습니다.");
-      } finally {
-        setIsJournalsLoading(false);
-      }
-    };
-    fetchMyJournals();
+  const fetchMyJournals = useCallback(async () => {
+    if (journalRequestPending.current) return;
+    journalRequestPending.current = true;
+    try {
+      const data = await getJournals();
+      setJournals(data.journals);
+      setNextCursor(data.nextCursor);
+      setHasNext(data.hasNext);
+      setJournalsError(null);
+      setLoadMoreError(null);
+    } finally {
+      journalRequestPending.current = false;
+    }
   }, []);
+
+  useEffect(() => {
+    void fetchMyJournals().catch((error) => {
+      console.error(error);
+      setJournalsError("여행 일지 목록을 불러오지 못했습니다.");
+    }).finally(() => setIsJournalsLoading(false));
+  }, [fetchMyJournals]);
 
   // 스크롤로 다음 페이지 불러오기
   const loadMoreJournals = async () => {
-    if (!nextCursor) return;
+    if (!nextCursor || journalRequestPending.current) return;
 
+    journalRequestPending.current = true;
     try {
       setIsLoadingMore(true);
       setLoadMoreError(null);
@@ -188,6 +194,7 @@ export default function MyPage() {
       console.error(e);
       setLoadMoreError("추가 여행 일지를 불러오지 못했습니다.");
     } finally {
+      journalRequestPending.current = false;
       setIsLoadingMore(false);
     }
   };
@@ -211,7 +218,15 @@ export default function MyPage() {
   };
 
   return (
-    <main className="flex flex-col h-dvh  bg-gray-10 pt-[calc(var(--safe-top)+12px)] pb-[var(--bottom-nav-offset)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden gap-2.5">
+    <PullToRefresh
+      onRefresh={fetchMyJournals}
+      restorationPagination={{
+        cursor: !isStampMode && hasNext && !isLoadingMore ? nextCursor : null,
+        loadMore: loadMoreJournals,
+      }}
+      disabled={isStampMode || isJournalsLoading || isLoadingMore || isSettingsOpen}
+      className="flex flex-col h-dvh bg-gray-10 pt-[calc(var(--safe-top)+12px)] pb-[var(--bottom-nav-offset)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden gap-2.5"
+    >
       {isLogoutModalOpen && (
         <ConfirmModal
           message="로그아웃 하시겠습니까?"
@@ -392,6 +407,6 @@ export default function MyPage() {
       <div ref={ref} className="h-1 w-full"></div>
 
       <BottomNav mode="course" activeTab="profile" />
-    </main>
+    </PullToRefresh>
   );
 }

@@ -4,6 +4,7 @@ import PlacePreviewCard from "./components/PlacePreviewCard";
 import { useEffect, useState } from "react";
 import { getSearchPlaces, type Place } from "@/api/admin";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { useListHistoryValue, useListScrollRestoration } from "@/hooks/useListScrollRestoration";
 
 const CATEGORY_STYLE_LABELS: Record<string, string> = {
   CULTURE: "문화공간",
@@ -21,7 +22,8 @@ interface SearchResultState {
 export default function SearchPage() {
   const navigate = useNavigate();
   const goBack = useBackNavigation("/admin/place");
-  const [query, setQuery] = useState("");
+  const restoreScroll = useListScrollRestoration();
+  const [query, setQuery] = useListHistoryValue("query", "");
   // 마지막으로 응답이 온 검색어와 그 결과를 같이 저장
   const [searchResult, setSearchResult] = useState<SearchResultState | null>(
     null,
@@ -29,7 +31,7 @@ export default function SearchPage() {
   const keyword = query.trim();
 
   // 디바운스
-  const [debouncedKeyword, setDebouncedKeyword] = useState("");
+  const [debouncedKeyword, setDebouncedKeyword] = useState(keyword);
 
   // keyword가 변경되고 500ms 뒤에 debouncedKeyword를 갱신
   useEffect(() => {
@@ -82,7 +84,7 @@ export default function SearchPage() {
   if (displayedError) return <p>{displayedError}</p>;
 
   return (
-    <main className="flex flex-col h-dvh gap-[17px] bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <main ref={restoreScroll} className="flex flex-col h-dvh gap-[17px] bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* header */}
       <header className="flex w-full items-center px-3 gap-4 pb-2.5">
         <div className="flex items-center justify-start">

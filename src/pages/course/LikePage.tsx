@@ -1,3 +1,4 @@
+import { useListScrollRestoration } from "@/hooks/useListScrollRestoration";
 import BackIcon from '@/assets/back.svg?react';
 import MoreIcon from '@/assets/like/more.svg?react';
 import CTAButton from '@/components/CTAButton';
@@ -18,6 +19,7 @@ import {
 
 function LikePage() {
   const navigate = useNavigate();
+  const restoreScroll = useListScrollRestoration();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [isAllSelectedMode, setIsAllSelectedMode] = useState(false);
@@ -251,7 +253,7 @@ function LikePage() {
   };
 
   return (
-    <main className="flex flex-col h-dvh overflow-y-auto bg-gray-10 items-center pt-[var(--safe-top)] pb-[calc(var(--safe-bottom)+140px)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <main ref={restoreScroll} className="flex flex-col h-dvh overflow-y-auto bg-gray-10 items-center pt-[var(--safe-top)] pb-[calc(var(--safe-bottom)+140px)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       <header className="grid w-full h-[50px] grid-cols-[40px_1fr_40px] items-center px-3">
         <div className='flex items-center justify-start'>
           <button

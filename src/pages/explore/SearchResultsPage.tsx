@@ -14,9 +14,11 @@ import ConceptTourCard from "./components/ConceptTourCard";
 import ExploreCourseItem from "./components/ExploreCourseItem";
 import ExploreSearchBar from "./components/ExploreSearchBar";
 import { getDisplayedConceptTours } from "./data/conceptTours";
+import { useListScrollRestoration } from "@/hooks/useListScrollRestoration";
 
 export default function SearchResultsPage() {
   const navigate = useNavigate();
+  const restoreScroll = useListScrollRestoration();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") ?? "";
   const isConceptSearch = searchParams.get("source") === "concept";
@@ -93,8 +95,8 @@ export default function SearchResultsPage() {
     : courses.length > 0;
 
   return (
-    <main className="flex flex-col h-dvh bg-gray-10 text-gray-100 pt-[calc(var(--safe-top)+12px)]">
-      <header className="flex h-[50px] items-center gap-4 px-3">
+    <main ref={restoreScroll} className="flex flex-col h-dvh overflow-y-auto bg-gray-10 text-gray-100 pt-[calc(var(--safe-top)+12px)]">
+      <header className="flex h-[50px] shrink-0 items-center gap-4 px-3">
         <button
           type="button"
           className="size-6 shrink-0 border-0 bg-transparent p-0"

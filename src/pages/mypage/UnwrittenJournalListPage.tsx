@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import PullToRefresh from "@/components/PullToRefresh";
 import UnwrittenJournalCard from "./components/UnwrittenJournalCard";
 import {
   getJournalWriteInfo,
@@ -6,7 +7,7 @@ import {
   type Course,
   type UnwrittenJournals,
 } from "@/api/journal";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLogDraft } from "../course/contexts/LogDraftContext";
 import { formatAcquiredAtToDisplayDate } from "@/utils/logDate";
@@ -17,28 +18,33 @@ export default function UnwrittenJournalListPage() {
   const { draft, initializeFromStamp } = useLogDraft();
   const [initializingId, setInitializingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const listRequestPending = useRef(false);
 
   const [unwrittenJournal, setUnwrittenJournal] =
     useState<UnwrittenJournals | null>(null);
 
-  const fetchUnwrittenJournals = async () => {
+  const fetchUnwrittenJournals = useCallback(async () => {
+    if (listRequestPending.current) return;
+    listRequestPending.current = true;
     try {
-      setError(null);
       const data = await getUnwrittenJournals();
       setUnwrittenJournal(data);
-    } catch (e) {
-      console.error(e);
-      setError("여행일지 목록을 불러오지 못했습니다.");
+      setError(null);
+    } finally {
+      listRequestPending.current = false;
     }
-  };
+  }, []);
+
+  const loadUnwrittenJournals = useCallback(() => {
+    void fetchUnwrittenJournals().catch((error) => {
+      console.error(error);
+      setError("여행일지 목록을 불러오지 못했습니다.");
+    });
+  }, [fetchUnwrittenJournals]);
 
   useEffect(() => {
-    const load = async () => {
-      await fetchUnwrittenJournals();
-    };
-
-    load();
-  }, []);
+    loadUnwrittenJournals();
+  }, [loadUnwrittenJournals]);
 
   const initializeJournalWriteInfo = async (course: Course) => {
     setInitializingId(course.memberStampId);
@@ -91,7 +97,11 @@ export default function UnwrittenJournalListPage() {
   };
 
   return (
-    <main className="flex flex-col h-dvh  bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden gap-2.5">
+    <PullToRefresh
+      onRefresh={fetchUnwrittenJournals}
+      disabled={initializingId !== null}
+      className="flex flex-col h-dvh bg-gray-10 pt-[calc(var(--safe-top)+12px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden gap-2.5"
+    >
       <Header showBack />
 
       {/* text */}
@@ -112,7 +122,7 @@ export default function UnwrittenJournalListPage() {
               <p className="text-body-02 text-gray-70">{error}</p>
               <button
                 type="button"
-                onClick={() => void fetchUnwrittenJournals()}
+                onClick={loadUnwrittenJournals}
                 className="text-body-02 text-primary-60 underline"
               >
                 다시 시도
@@ -130,6 +140,6 @@ export default function UnwrittenJournalListPage() {
           )}
         </div>
       </section>
-    </main>
+    </PullToRefresh>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ExploreCourseItem from "./components/ExploreCourseItem";
@@ -19,15 +19,21 @@ import ExploreLineTabs from "./components/ExploreLineTabs";
 import { stationsByLine } from "@/data/stationsByLine";
 import { searchStations } from "@/api/stations";
 import { getDisplayedExploreLines } from "./utils/exploreLines";
+import { useListHistoryValue, useListScrollRestoration } from "@/hooks/useListScrollRestoration";
 
 type SortOption = "인기순" | "최신순";
 export default function LineCoursesPage() {
   const navigate = useNavigate();
   const pageRef = useRef<HTMLElement>(null);
+  const restoreScroll = useListScrollRestoration();
+  const setPageRef = useCallback((element: HTMLElement | null) => {
+    pageRef.current = element;
+    restoreScroll(element);
+  }, [restoreScroll]);
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedLineId = Number(searchParams.get("line"));
-  const [station, setStation] = useState<ExploreStation | null>(null);
-  const [sortOption, setSortOption] = useState<SortOption>("인기순");
+  const [station, setStation] = useListHistoryValue<ExploreStation | null>("station", null);
+  const [sortOption, setSortOption] = useListHistoryValue<SortOption>("sort", "인기순");
   const [isStationMenuOpen, setIsStationMenuOpen] = useState(false);
   const stationButtonRef = useRef<HTMLButtonElement>(null);
   const stationDialogRef = useRef<HTMLElement>(null);
@@ -228,7 +234,7 @@ export default function LineCoursesPage() {
 
   return (
     <main
-      ref={pageRef}
+      ref={setPageRef}
       className="flex h-dvh flex-col bg-gray-10 text-gray-100 leading-[1.4] tracking-[-0.025em] pt-[calc(var(--safe-top)+12px)] text-gray-100 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
     >
       <Header showBack />

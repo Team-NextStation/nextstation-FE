@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
+import { useListScrollRestoration } from "@/hooks/useListScrollRestoration";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import * as motion from "motion/react-client";
 import BaseLoading from "@/components/BaseLoading";
@@ -35,6 +36,7 @@ export default function UserPage() {
   const [hasNext, setHasNext] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadingMore = useRef(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -99,8 +101,9 @@ export default function UserPage() {
   }, [hasValidMemberId, memberId]);
 
   const loadMoreJournals = async () => {
-    if (isBlocked || !nextCursor || isLoadingMore) return;
+    if (isBlocked || !nextCursor || loadingMore.current) return;
 
+    loadingMore.current = true;
     try {
       setIsLoadingMore(true);
       setLoadMoreError(null);
@@ -111,6 +114,7 @@ export default function UserPage() {
     } catch {
       setLoadMoreError("추가 여행 일지를 불러오지 못했습니다.");
     } finally {
+      loadingMore.current = false;
       setIsLoadingMore(false);
     }
   };
@@ -123,6 +127,11 @@ export default function UserPage() {
         void loadMoreJournals();
       }
     },
+  });
+
+  const restoreScroll = useListScrollRestoration({
+    cursor: !isStampMode && !isBlocked && hasNext && !isLoadingMore ? nextCursor : null,
+    loadMore: loadMoreJournals,
   });
 
   if (!hasValidMemberId) {
@@ -138,7 +147,7 @@ export default function UserPage() {
   };
 
   return (
-    <main className="flex h-dvh flex-col gap-2.5 overflow-y-auto bg-gray-10 pt-[calc(var(--safe-top)+12px)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <main ref={restoreScroll} className="flex h-dvh flex-col gap-2.5 overflow-y-auto bg-gray-10 pt-[calc(var(--safe-top)+12px)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {isReportModalOpen && !isMine && (
         <ReportModal
           mode="profile"
